@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------- Unity
+# Pastas geradas pelo Editor (recriadas ao abrir o projeto)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Os .meta dos assets SEMPRE vão para o repositório (guardam os GUIDs das referências)
+!/[Aa]ssets/**/*.meta
+
+# Arquivos de IDE gerados pelo Unity
+.vs/
+.vscode/
+.idea/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Relatórios de crash e builds
+sysinfo.txt
+mono_crash.*
+crashlytics-build.properties
+*.apk
+*.aab
+*.app
+*.unitypackage
+*.unitypackage.meta
+
+# Addressables / StreamingAssets gerados
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# ---------------------------------------------------------------- Python (Tools/AssetPipeline)
+__pycache__/
+*.pyc
+.env
+
+# ---------------------------------------------------------------- Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

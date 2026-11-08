@@ -1,0 +1,17 @@
+# Normaliza finais de linha dos arquivos de texto (scripts, cenas e prefabs em YAML)
+* text=auto
+
+# Binários: nunca converter nem tentar fazer diff de texto
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.psd binary
+*.tga binary
+*.exr binary
+*.glb binary
+*.fbx binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.ttf binary
+*.otf binary

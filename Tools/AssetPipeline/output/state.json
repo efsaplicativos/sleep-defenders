@@ -1,0 +1,62 @@
+{
+  "toy_lamp": {
+    "task_id": "ed6e9e1f-2232-4e11-9a95-49138d6680ba",
+    "status": "done",
+    "credits": 30.0
+  },
+  "shadow_creeper": {
+    "task_id": "3b39699c-42e5-494f-8d28-307e0600688a",
+    "status": "done",
+    "credits": 30.0
+  },
+  "teddy_bear": {
+    "task_id": "5169e1b3-f1f3-4e1a-8a44-ba7b3d3c14fb",
+    "status": "done",
+    "credits": 30.0
+  },
+  "laser_robot": {
+    "task_id": "6b322546-209d-4e7f-a878-f4d951ab6703",
+    "status": "done",
+    "credits": 30.0
+  },
+  "closet_monster": {
+    "task_id": "fdf190e9-9761-4dac-8a95-e741ef49c4c7",
+    "status": "done",
+    "credits": 30.0
+  },
+  "rc_car": {
+    "task_id": "4afdc9d7-a1a2-4dbb-b263-5390e0104885",
+    "status": "done",
+    "credits": 30.0
+  },
+  "winged_nightmare": {
+    "task_id": "cfd0e909-2861-469b-ac42-73139dab19b6",
+    "status": "done",
+    "credits": 30.0
+  },
+  "bed": {
+    "task_id": "7cffbe95-01e7-4702-bdac-7562fe7241fa",
+    "status": "done",
+    "credits": 30.0
+  },
+  "wardrobe": {
+    "task_id": "f1f79231-f60c-4e83-88d1-6842b0fda903",
+    "status": "done",
+    "credits": 30.0
+  },
+  "toy_chest": {
+    "task_id": "0d99b7af-51e9-4146-8425-7084c5cb2216",
+    "status": "done",
+    "credits": 30.0
+  },
+  "bookshelf": {
+    "task_id": "c2db51d3-8531-425e-b22b-80e5aca26cb8",
+    "status": "done",
+    "credits": 30.0
+  },
+  "toy_blocks": {
+    "task_id": "5727a4ea-958e-4257-b4ee-5db1a471e004",
+    "status": "done",
+    "credits": 30.0
+  }
+}

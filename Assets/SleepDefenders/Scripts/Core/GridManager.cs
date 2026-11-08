@@ -167,6 +167,28 @@ namespace SleepDefenders
 
         public bool IsInside(int row, int column) => row >= 0 && row < rows && column >= 0 && column < columns;
 
+        /// <summary>Coluna que contém o X do mundo (pode ficar fora da grade: &lt; 0 ou &gt;= Columns).</summary>
+        public int ColumnAt(float worldX) => Mathf.FloorToInt((worldX - LeftEdgeX) / cellSize);
+
+        /// <summary>Converte uma posição do mundo em (linha, coluna). Falso se estiver fora do tapete.</summary>
+        public bool WorldToCell(Vector3 world, out int row, out int column)
+        {
+            float topZ = transform.position.z + rows * cellSize * 0.5f;
+            row = Mathf.FloorToInt((topZ - world.z) / cellSize);
+            column = ColumnAt(world.x);
+            return IsInside(row, column);
+        }
+
+        /// <summary>Quantos brinquedos vivos deste tipo estão no tapete (usado no preço crescente dos cards).</summary>
+        public int CountToys(Type toyType)
+        {
+            if (occupants == null || toyType == null) return 0;
+            int count = 0;
+            foreach (ToyBase toy in occupants)
+                if (toy != null && toy.IsAlive && toy.GetType() == toyType) count++;
+            return count;
+        }
+
         public GridCell GetCell(int row, int column)
         {
             if (!IsInside(row, column)) return null;

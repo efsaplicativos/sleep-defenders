@@ -94,6 +94,27 @@ namespace SleepDefenders
 
         protected virtual float CurrentSpeed => moveSpeed;
 
+        /// <summary>Sombras andam mais devagar na luz de um abajur (ver LightField). O Devorador de Luz não.</summary>
+        protected virtual bool SlowedByLight => true;
+
+        /// <summary>Velocidade de agora, já com o efeito da luz.</summary>
+        public float EffectiveSpeed
+        {
+            get
+            {
+                float speed = CurrentSpeed;
+                LightField light = LightField.Instance;
+                if (SlowedByLight && light != null) speed *= light.EnemySpeedFactorAt(Lane, transform.position);
+                return speed;
+            }
+        }
+
+        /// <summary>
+        /// Faixa preferida deste tipo de monstro entre as opções da onda (-1 = sem preferência, sorteia).
+        /// Chamado no PREFAB pelo EnemySpawner antes de criar o monstro.
+        /// </summary>
+        public virtual int PreferredLane(IReadOnlyList<int> options) => -1;
+
         protected virtual void FixedUpdate()
         {
             if (!IsAlive) return;
@@ -120,7 +141,7 @@ namespace SleepDefenders
         /// <summary>Movimento linear para a esquerda (rumo à cama).</summary>
         protected virtual void Move()
         {
-            body.MovePosition(body.position + Vector3.left * (CurrentSpeed * Time.fixedDeltaTime));
+            body.MovePosition(body.position + Vector3.left * (EffectiveSpeed * Time.fixedDeltaTime));
         }
 
         // ------------------------------------------------------------------ Ataque

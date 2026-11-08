@@ -100,6 +100,13 @@ ASSETS = [
      MONSTER_STYLE +
      "A small flying nightmare imp: round dark purple body, large spread bat-like leathery wings, glowing magenta "
      "eyes, two tiny fangs, curled pointy tail, little claws, hovering pose with wings spread wide.", 30000),
+    # Devorador de Luz: se esgueira entre os brinquedos e come os abajures.
+    ("light_eater", "monster",
+     MONSTER_STYLE +
+     "A sneaky slinky shadow creature with a long low weasel-like body made of dark navy-black velvet, four short "
+     "legs, a big round greedy open mouth with blunt teeth, small glowing cyan eyes, a round belly painted with a "
+     "warm yellow glow and the outlines of little swallowed light bulbs, a curly tail ending in a tiny light bulb, "
+     "sneaking pose with the head low.", 30000),
 
     # --- Cenario do quarto ---
     ("bed", "prop",

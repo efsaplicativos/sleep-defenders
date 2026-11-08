@@ -15,11 +15,14 @@ MonoBehaviour:
   nights:
   - title: Noite 1
     subtitle: A Primeira Noite
-    tip: "Coloque Abajures para juntar Luz e Rob\xF4s Laser para proteger as 3 faixas
-      do meio."
+    tip: Abajures geram Luz e iluminam as casas em volta (ali as sombras ficam lentas).
+      Cada abajur novo custa 25 a mais!
     startingLight: 150
     initialDelay: 30
     moonlight: 1
+    litColumns: 9
+    laneGuards: 1
+    newRules: []
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
@@ -32,6 +35,9 @@ MonoBehaviour:
       delayBeforeWave: 0
       isBigWave: 0
       lanes: 02000000
+      packSize: 1
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 2
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
@@ -40,29 +46,42 @@ MonoBehaviour:
       delayBeforeWave: 18
       isBigWave: 0
       lanes: 010000000200000003000000
+      packSize: 1
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 3
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 5
-      spawnInterval: 7
+      spawnInterval: 8
       delayBeforeWave: 18
       isBigWave: 0
       lanes: 010000000200000003000000
+      packSize: 1
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda Final
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 8
-      spawnInterval: 4
+      spawnInterval: 8
       delayBeforeWave: 20
       isBigWave: 1
       lanes: 010000000200000003000000
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
   - title: Noite 2
     subtitle: Asas no Escuro
-    tip: "Pesadelos Alados voam por cima do primeiro brinquedo da faixa. Use Ursos
-      de Pel\xFAcia para segur\xE1-los!"
+    tip: "Pesadelos Alados voam por cima do primeiro brinquedo da faixa, e os monstros
+      come\xE7am a vir em dupla. Um Rob\xF4 sozinho n\xE3o basta!"
     startingLight: 150
     initialDelay: 25
     moonlight: 1
+    litColumns: 9
+    laneGuards: 1
+    newRules:
+    - Monstros em dupla
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
@@ -76,6 +95,9 @@ MonoBehaviour:
       delayBeforeWave: 0
       isBigWave: 0
       lanes: 
+      packSize: 1
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 2
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
@@ -86,43 +108,60 @@ MonoBehaviour:
       delayBeforeWave: 18
       isBigWave: 0
       lanes: 
+      packSize: 1
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 3
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 6
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 2
-      spawnInterval: 7
+      spawnInterval: 10
       delayBeforeWave: 18
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 4
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 7
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 3
-      spawnInterval: 6
+      spawnInterval: 10
       delayBeforeWave: 18
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda Final
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 10
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 4
-      spawnInterval: 3.5
+      spawnInterval: 8
       delayBeforeWave: 20
       isBigWave: 1
       lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
   - title: Noite 3
     subtitle: "O Arm\xE1rio Rangeu"
-    tip: "O Monstro do Arm\xE1rio \xE9 lento, mas aguenta muito dano. Guarde um Carrinho
-      RC para emerg\xEAncias!"
+    tip: "O fundo do tapete est\xE1 escuro: l\xE1 os Rob\xF4s atiram na metade da
+      velocidade. Ilumine a frente com Abajures!"
     startingLight: 150
     initialDelay: 25
     moonlight: 1
+    litColumns: 5
+    laneGuards: 1
+    newRules:
+    - "Escurid\xE3o no fundo do tapete"
+    - 2 faixas ao mesmo tempo
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
@@ -137,59 +176,79 @@ MonoBehaviour:
       delayBeforeWave: 0
       isBigWave: 0
       lanes: 
+      packSize: 1
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 2
-      enemies:
-      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 5
-      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
-        count: 2
-      spawnInterval: 8
-      delayBeforeWave: 18
-      isBigWave: 0
-      lanes: 
-    - name: Onda 3
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 6
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 2
-      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
-        count: 1
-      spawnInterval: 7
+      spawnInterval: 11
       delayBeforeWave: 18
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
+    - name: Onda 3
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 6
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 3
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 1
+      spawnInterval: 11
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 4
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 7
+        count: 8
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 3
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
         count: 2
-      spawnInterval: 6
+      spawnInterval: 12
       delayBeforeWave: 18
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 2
+      blackout: 0
     - name: Onda Final
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 11
+        count: 12
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
-        count: 4
+        count: 5
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
         count: 3
-      spawnInterval: 3.2
+      spawnInterval: 10
       delayBeforeWave: 20
       isBigWave: 1
       lanes: 
+      packSize: 2
+      lanesAtOnce: 2
+      blackout: 0
   - title: Noite 4
     subtitle: Tempestade de Sombras
-    tip: Uma onda enorme chega no meio da noite. Monte uma defesa forte em todas
-      as faixas!
-    startingLight: 150
-    initialDelay: 25
+    tip: "Sem Ratinhos de Corda! O Devorador de Luz passa pelos brinquedos e come
+      Abajures: s\xF3 o Urso o segura. Cuidado com o apag\xE3o!"
+    startingLight: 200
+    initialDelay: 30
     moonlight: 1
+    litColumns: 3
+    laneGuards: 0
+    newRules:
+    - "Apag\xE3o"
+    - Sem Ratinhos de Corda
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
@@ -200,32 +259,43 @@ MonoBehaviour:
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 5
-      spawnInterval: 9
+      spawnInterval: 10
       delayBeforeWave: 0
       isBigWave: 0
       lanes: 
+      packSize: 1
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 2
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 6
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 2
-      spawnInterval: 7.5
+      spawnInterval: 11
       delayBeforeWave: 16
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 3
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 7
+        count: 6
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
-        count: 3
+        count: 2
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
         count: 1
-      spawnInterval: 6.5
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 1
+      spawnInterval: 11
       delayBeforeWave: 16
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda Grande
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
@@ -234,22 +304,32 @@ MonoBehaviour:
         count: 3
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
         count: 2
-      spawnInterval: 3.5
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 1
+      spawnInterval: 11
       delayBeforeWave: 18
       isBigWave: 1
       lanes: 
+      packSize: 2
+      lanesAtOnce: 2
+      blackout: 1
     - name: Onda 5
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 9
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
-        count: 4
+        count: 3
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
         count: 2
-      spawnInterval: 5
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 2
+      spawnInterval: 12
       delayBeforeWave: 16
       isBigWave: 0
       lanes: 
+      packSize: 3
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda Final
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
@@ -257,17 +337,29 @@ MonoBehaviour:
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 5
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
-        count: 4
-      spawnInterval: 2.8
+        count: 3
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 2
+      spawnInterval: 11
       delayBeforeWave: 20
       isBigWave: 1
       lanes: 
+      packSize: 3
+      lanesAtOnce: 2
+      blackout: 0
   - title: Noite 5
     subtitle: A Noite Mais Longa
-    tip: "A \xFAltima e mais longa noite. Aguente at\xE9 o amanhecer!"
-    startingLight: 150
-    initialDelay: 25
+    tip: "S\xF3 a beira da cama tem luz e as luzes v\xE3o se apagar duas vezes. Ilumine
+      as faixas e proteja seus Abajures at\xE9 o amanhecer!"
+    startingLight: 200
+    initialDelay: 30
     moonlight: 1
+    litColumns: 1
+    laneGuards: 0
+    newRules:
+    - "Dois apag\xF5es"
+    - "S\xF3 a beira da cama iluminada"
+    - Grupos de 3
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
@@ -278,20 +370,26 @@ MonoBehaviour:
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 6
-      spawnInterval: 8
+      spawnInterval: 10
       delayBeforeWave: 0
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 2
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 7
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 3
-      spawnInterval: 7
+      spawnInterval: 11
       delayBeforeWave: 15
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 3
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
@@ -300,10 +398,15 @@ MonoBehaviour:
         count: 3
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
         count: 2
-      spawnInterval: 6
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 1
+      spawnInterval: 11
       delayBeforeWave: 15
       isBigWave: 0
       lanes: 
+      packSize: 2
+      lanesAtOnce: 2
+      blackout: 0
     - name: Onda Grande
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
@@ -312,22 +415,32 @@ MonoBehaviour:
         count: 4
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
         count: 2
-      spawnInterval: 3.2
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 2
+      spawnInterval: 11
       delayBeforeWave: 18
       isBigWave: 1
       lanes: 
+      packSize: 3
+      lanesAtOnce: 2
+      blackout: 1
     - name: Onda 5
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 10
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
-        count: 5
+        count: 4
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
         count: 3
-      spawnInterval: 5
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 2
+      spawnInterval: 12
       delayBeforeWave: 15
       isBigWave: 0
       lanes: 
+      packSize: 3
+      lanesAtOnce: 1
+      blackout: 0
     - name: Onda 6
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
@@ -335,20 +448,30 @@ MonoBehaviour:
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 5
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
-        count: 4
-      spawnInterval: 4.5
+        count: 3
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 3
+      spawnInterval: 12
       delayBeforeWave: 15
       isBigWave: 0
       lanes: 
+      packSize: 3
+      lanesAtOnce: 2
+      blackout: 0
     - name: Onda Final
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
         count: 16
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
-        count: 7
+        count: 6
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
-        count: 5
-      spawnInterval: 2.4
+        count: 4
+      - prefab: {fileID: 8909716810734709106, guid: 784cdeae00ca77544bf68eddf6e8a3bb, type: 3}
+        count: 3
+      spawnInterval: 11
       delayBeforeWave: 20
       isBigWave: 1
       lanes: 
+      packSize: 3
+      lanesAtOnce: 2
+      blackout: 1

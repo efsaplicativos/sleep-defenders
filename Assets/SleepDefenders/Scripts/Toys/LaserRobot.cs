@@ -6,6 +6,7 @@ namespace SleepDefenders
     /// Robô Laser — atacante de linha. Custo 100.
     /// Só dispara quando um Physics.Raycast (ou BoxCast) ao longo da PRÓPRIA faixa encontra um monstro
     /// na layer "Enemy" dentro do tapete. A varredura roda em intervalos curtos em vez de todo frame.
+    /// No escuro (casa sem luz de cabeceira nem de abajur, ver LightField) atira na metade da velocidade.
     /// </summary>
     public class LaserRobot : ToyBase
     {
@@ -37,6 +38,13 @@ namespace SleepDefenders
         private float scanTimer;
         private bool hasTarget;
 
+        /// <summary>Está numa casa escura (atira mais devagar)?</summary>
+        public bool InDarkness => LightField.Instance != null && !LightField.Instance.IsLit(Lane, Column);
+
+        /// <summary>Intervalo entre tiros agora, já com o efeito da escuridão.</summary>
+        public float CurrentFireInterval =>
+            fireInterval * (LightField.Instance != null ? LightField.Instance.FireIntervalMultiplier(Lane, Column) : 1f);
+
         private void Update()
         {
             if (!GameManager.IsPlaying || Lane < 0) return;
@@ -48,13 +56,13 @@ namespace SleepDefenders
                 bool hadTarget = hasTarget;
                 hasTarget = CheckForEnemies();
                 if (hasTarget && !hadTarget)
-                    fireTimer = Mathf.Min(fireTimer, fireInterval * firstShotDelayFactor);
+                    fireTimer = Mathf.Min(fireTimer, CurrentFireInterval * firstShotDelayFactor);
             }
 
             fireTimer -= Time.deltaTime;
             if (hasTarget && fireTimer <= 0f)
             {
-                fireTimer = fireInterval;
+                fireTimer = CurrentFireInterval;
                 ShootLaser();
             }
 

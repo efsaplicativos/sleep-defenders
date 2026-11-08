@@ -23,6 +23,15 @@ namespace SleepDefenders
         [Tooltip("Raios de luar caem do teto nesta noite?")]
         public bool moonlight = true;
 
+        [Header("Luz e escuridão")]
+        [Tooltip("Colunas iluminadas pela luz de cabeceira, a partir da cama (9 = tapete todo claro). " +
+                 "No escuro os Robôs atiram na metade da velocidade.")]
+        [Range(0, 9)] public int litColumns = 9;
+        [Tooltip("Ratinhos de Corda na beira da cama nesta noite?")]
+        public bool laneGuards = true;
+        [Tooltip("Regras novas desta noite, mostradas em \"Novidades\" no menu (ex.: \"Apagão\").")]
+        public List<string> newRules = new List<string>();
+
         [Tooltip("Cards disponíveis nesta noite (vazio = todos).")]
         public List<ToyDefinition> toys = new List<ToyDefinition>();
         public List<Wave> waves = new List<Wave>();
@@ -44,7 +53,7 @@ namespace SleepDefenders
             for (int i = 0; i < waves.Count; i++)
             {
                 if (i > 0) t += waves[i].delayBeforeWave;
-                t += waves[i].TotalCount * waves[i].spawnInterval;
+                t += waves[i].Arrivals * waves[i].spawnInterval; // grupos chegam juntos
             }
             return t;
         }
@@ -86,6 +95,8 @@ namespace SleepDefenders
                 if (t != null && !seenToys.Contains(t)) result.Add(t.DisplayName);
             foreach (EnemyBase e in night.EnemyTypes())
                 if (!seenEnemies.Contains(e)) result.Add(e.DisplayName);
+            foreach (string rule in night.newRules)
+                if (!string.IsNullOrWhiteSpace(rule)) result.Add(rule);
             return result;
         }
     }

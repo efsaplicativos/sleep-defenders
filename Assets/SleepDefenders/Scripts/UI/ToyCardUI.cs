@@ -33,7 +33,10 @@ namespace SleepDefenders
 
         public ToyDefinition Definition => definition;
         public bool IsReady => rechargeRemaining <= 0f;
-        public bool CanAfford => CurrencyManager.Instance != null && definition != null && CurrencyManager.Instance.CanAfford(definition.Cost);
+        public bool CanAfford => CurrencyManager.Instance != null && definition != null && CurrencyManager.Instance.CanAfford(definition.CurrentCost);
+        /// <summary>Preço mostrado no card agora (sobe com cada Abajur no tapete).</summary>
+        public int CurrentCost => definition != null ? definition.CurrentCost : 0;
+        private int shownCost = -1;
         public float RechargeRemaining => rechargeRemaining;
 
         public void SetController(ToyPlacementController owner) => controller = owner;
@@ -55,8 +58,17 @@ namespace SleepDefenders
         {
             if (definition == null) return;
             if (icon != null && definition.icon != null) icon.sprite = definition.icon;
-            if (costLabel != null) costLabel.text = definition.Cost.ToString();
+            RefreshCost();
             if (nameLabel != null) nameLabel.text = definition.DisplayName;
+        }
+
+        /// <summary>Atualiza o preço do card só quando ele muda (evita criar strings todo frame).</summary>
+        private void RefreshCost()
+        {
+            int cost = CurrentCost;
+            if (cost == shownCost || costLabel == null) return;
+            shownCost = cost;
+            costLabel.text = cost.ToString();
         }
 
         public void SetHotkey(string key)
@@ -92,6 +104,7 @@ namespace SleepDefenders
             if (cooldownOverlay != null)
                 cooldownOverlay.fillAmount = rechargeRemaining > 0f ? rechargeRemaining / rechargeTotal : 0f;
 
+            RefreshCost();
             bool usable = IsReady && CanAfford;
             if (icon != null) icon.color = usable ? Color.white : unaffordableTint;
             if (costLabel != null) costLabel.color = CanAfford ? Color.white : new Color(1f, 0.55f, 0.55f);

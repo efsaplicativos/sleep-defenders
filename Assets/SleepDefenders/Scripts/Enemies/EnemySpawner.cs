@@ -26,6 +26,14 @@ namespace SleepDefenders
         [Tooltip("Faixas por onde os monstros desta onda podem vir (0 = fundo ... 4 = frente). Vazio = todas.")]
         public List<int> lanes = new List<int>();
 
+        [Header("Rajadas")]
+        [Tooltip("Monstros que chegam juntos, em fila, na MESMA faixa a cada chegada (1 = um por vez).")]
+        [Min(1)] public int packSize = 1;
+        [Tooltip("Quantas faixas recebem um grupo ao mesmo tempo a cada chegada.")]
+        [Min(1)] public int lanesAtOnce = 1;
+        [Tooltip("Apagão: os abajures se apagam por alguns segundos quando esta onda começa (ver LightField).")]
+        public bool blackout;
+
         public int TotalCount
         {
             get
@@ -35,12 +43,22 @@ namespace SleepDefenders
                 return total;
             }
         }
+
+        /// <summary>Monstros que chegam a cada intervalo (grupo × faixas).</summary>
+        public int GroupSize => Mathf.Max(1, packSize) * Mathf.Max(1, lanesAtOnce);
+
+        /// <summary>Quantas "chegadas" a onda tem (cada uma separada por spawnInterval).</summary>
+        public int Arrivals => Mathf.CeilToInt(TotalCount / (float)GroupSize);
     }
 
     /// <summary>
     /// Sistema de ondas. Cada onda é uma lista de monstros que nascem em faixas aleatórias
     /// (entre as faixas permitidas da onda, evitando repetir a mesma faixa duas vezes seguidas),
     /// à direita do tapete. As ondas de cada noite vêm da Campanha (ver GameManager.ConfigureNight).
+    ///
+    /// Rajadas: a cada chegada, "lanesAtOnce" faixas diferentes recebem um grupo de "packSize" monstros
+    /// em fila. Um único Robô não dá conta de um grupo, então o jogador precisa se preparar antes.
+    /// Alguns monstros escolhem a própria faixa (ex.: o Devorador de Luz procura a faixa com mais abajures).
     /// </summary>
     public class EnemySpawner : MonoBehaviour
     {
@@ -50,6 +68,8 @@ namespace SleepDefenders
         [Tooltip("Distância à direita da última coluna em que os monstros nascem.")]
         [SerializeField] private float spawnOffsetX = 1.2f;
         [SerializeField, Range(0f, 0.9f)] private float intervalJitter = 0.3f;
+        [Tooltip("Distância entre os monstros de um mesmo grupo (em fila na faixa).")]
+        [SerializeField, Min(0.3f)] private float packSpacing = 0.85f;
         [Tooltip("Espera mínima entre ondas quando não há monstros vivos.")]
         [SerializeField, Min(0f)] private float minGapWhenClear = 4f;
         [SerializeField] private Transform enemiesParent;
@@ -115,14 +135,27 @@ namespace SleepDefenders
                 WaveStarted?.Invoke(i, wave);
 
                 List<EnemyBase> queue = BuildShuffledQueue(wave);
-                for (int n = 0; n < queue.Count; n++)
+                int pack = Mathf.Max(1, wave.packSize);
+                int lanesNow = Mathf.Max(1, wave.lanesAtOnce);
+                int n = 0;
+                for (int arrival = 0; n < queue.Count; arrival++)
                 {
-                    SpawnEnemy(queue[n], PickLane(wave));
-                    spawned++;
+                    // Uma chegada: "lanesNow" faixas diferentes, cada uma com um grupo de "pack" monstros em fila.
+                    usedLanes.Clear();
+                    for (int l = 0; l < lanesNow && n < queue.Count; l++)
+                    {
+                        int lane = PickLaneFor(queue[n], wave, usedLanes);
+                        usedLanes.Add(lane);
+                        for (int k = 0; k < pack && n < queue.Count; k++, n++)
+                        {
+                            SpawnEnemy(queue[n], lane, k * packSpacing);
+                            spawned++;
+                        }
+                    }
                     Progress = total > 0 ? spawned / (float)total : 1f;
 
-                    // Na onda grande os 3 primeiros chegam juntos, como um "bando".
-                    bool burst = wave.isBigWave && n < 2;
+                    // Na onda grande as 3 primeiras chegadas vêm quase juntas, como um "bando".
+                    bool burst = wave.isBigWave && arrival < 2;
                     float wait = burst ? 0.4f : wave.spawnInterval * (1f + UnityEngine.Random.Range(-intervalJitter, intervalJitter));
                     yield return WaitWhilePlaying(wait, false);
                 }
@@ -161,9 +194,17 @@ namespace SleepDefenders
         }
 
         private readonly List<int> laneOptions = new List<int>();
+        private readonly List<int> usedLanes = new List<int>();
 
         /// <summary>Sorteia uma faixa entre as permitidas pela onda, evitando repetir a anterior.</summary>
-        public int PickLane(Wave wave)
+        public int PickLane(Wave wave) => PickLaneFor(null, wave, null);
+
+        /// <summary>
+        /// Escolhe a faixa de um monstro: entre as permitidas pela onda e fora de "exclude"
+        /// (faixas que já receberam um grupo nesta chegada). Se o monstro tiver preferência
+        /// (EnemyBase.PreferredLane), ela vale; senão sorteia evitando repetir a faixa anterior.
+        /// </summary>
+        public int PickLaneFor(EnemyBase prefab, Wave wave, ICollection<int> exclude)
         {
             GridManager grid = GridManager.Instance;
             int rows = grid != null ? grid.Rows : 5;
@@ -175,6 +216,17 @@ namespace SleepDefenders
             if (laneOptions.Count == 0)
                 for (int l = 0; l < rows; l++) laneOptions.Add(l);
 
+            // Tira as faixas já usadas nesta chegada (se sobrar alguma).
+            if (exclude != null && exclude.Count > 0 && laneOptions.Exists(l => !exclude.Contains(l)))
+                laneOptions.RemoveAll(exclude.Contains);
+
+            int preferred = prefab != null ? prefab.PreferredLane(laneOptions) : -1;
+            if (preferred >= 0 && laneOptions.Contains(preferred))
+            {
+                lastLane = preferred;
+                return preferred;
+            }
+
             int lane = laneOptions[UnityEngine.Random.Range(0, laneOptions.Count)];
             if (laneOptions.Count > 1 && lane == lastLane)
             {
@@ -185,13 +237,17 @@ namespace SleepDefenders
             return lane;
         }
 
-        /// <summary>Cria um monstro na faixa indicada (público para testes e eventos de script).</summary>
-        public EnemyBase SpawnEnemy(EnemyBase prefab, int lane)
+        /// <summary>
+        /// Cria um monstro na faixa indicada (público para testes e eventos de script).
+        /// "extraX" afasta o ponto de nascimento para a direita (usado para enfileirar os grupos).
+        /// </summary>
+        public EnemyBase SpawnEnemy(EnemyBase prefab, int lane, float extraX = 0f)
         {
             GridManager grid = GridManager.Instance;
             if (prefab == null || grid == null) return null;
 
-            var position = new Vector3(grid.RightEdgeX + spawnOffsetX, grid.transform.position.y, grid.GetLaneZ(lane));
+            // A posição é dada já no Instantiate: depois disso o Rigidbody cinemático é quem manda.
+            var position = new Vector3(grid.RightEdgeX + spawnOffsetX + Mathf.Max(0f, extraX), grid.transform.position.y, grid.GetLaneZ(lane));
             EnemyBase enemy = Instantiate(prefab, position, Quaternion.identity, enemiesParent);
             enemy.Initialize(lane, grid.BedLineX);
             EnemySpawned?.Invoke(enemy);

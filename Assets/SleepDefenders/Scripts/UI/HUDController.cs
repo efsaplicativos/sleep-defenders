@@ -45,6 +45,7 @@ namespace SleepDefenders
 
         private GameManager game;
         private EnemySpawner spawner;
+        private LightField lightField;
         private Coroutine bannerRoutine;
 
         private void Awake()
@@ -77,6 +78,8 @@ namespace SleepDefenders
             }
             if (spawner != null) spawner.WaveStarted += OnWaveStarted;
             LaneGuard.Triggered += OnLaneGuardTriggered;
+            lightField = LightField.Instance;
+            if (lightField != null) lightField.BlackoutChanged += OnBlackoutChanged;
         }
 
         private void OnDestroy()
@@ -88,6 +91,7 @@ namespace SleepDefenders
             }
             if (spawner != null) spawner.WaveStarted -= OnWaveStarted;
             LaneGuard.Triggered -= OnLaneGuardTriggered;
+            if (lightField != null) lightField.BlackoutChanged -= OnBlackoutChanged;
         }
 
         private void Update()
@@ -187,10 +191,23 @@ namespace SleepDefenders
         private void OnWaveStarted(int index, Wave wave)
         {
             Sfx.Play(SfxType.WaveStart);
-            if (index == spawner.TotalWaves - 1) ShowBanner("ONDA FINAL!", 3f);
-            else if (wave.isBigWave) ShowBanner("Uma onda enorme de monstros se aproxima!", 3f);
-            else if (index == 0) ShowBanner("Os monstros estão chegando!", 2.5f);
-            else ShowBanner($"Onda {index + 1}", 2f);
+            string message;
+            float seconds;
+            if (index == spawner.TotalWaves - 1) { message = "ONDA FINAL!"; seconds = 3f; }
+            else if (wave.isBigWave) { message = "Uma onda enorme de monstros se aproxima!"; seconds = 3f; }
+            else if (index == 0) { message = "Os monstros estão chegando!"; seconds = 2.5f; }
+            else { message = $"Onda {index + 1}"; seconds = 2f; }
+            // O apagão desta onda já disparou (LightField): junta os dois avisos num só.
+            if (wave.blackout) message += "\n<size=70%><color=#FFB3B3>APAGÃO! Os abajures se apagaram.</color></size>";
+            ShowBanner(message, seconds);
+        }
+
+        private void OnBlackoutChanged(bool started)
+        {
+            if (started)
+                ShowBanner("APAGÃO!\n<size=70%>Os abajures se apagaram por alguns segundos.</size>", 2.5f);
+            else
+                ShowBanner("As luzes voltaram!", 1.5f);
         }
 
         private void OnLaneGuardTriggered(LaneGuard guard) =>

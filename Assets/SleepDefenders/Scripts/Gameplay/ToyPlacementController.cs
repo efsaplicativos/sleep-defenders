@@ -197,9 +197,10 @@ namespace SleepDefenders
         {
             if (selectedCard == null || cell == null) return false;
             ToyDefinition def = selectedCard.Definition;
+            int cost = def.CurrentCost; // calculado ANTES de colocar (o preço sobe depois)
 
             if (!grid.CanPlace(cell) || !selectedCard.IsReady || CurrencyManager.Instance == null
-                || !CurrencyManager.Instance.TrySpendLight(def.Cost))
+                || !CurrencyManager.Instance.TrySpendLight(cost))
             {
                 Sfx.Play(SfxType.Error);
                 return false;
@@ -207,7 +208,7 @@ namespace SleepDefenders
 
             if (!grid.TryPlaceToy(def.prefab, cell.Row, cell.Column, out _))
             {
-                CurrencyManager.Instance.AddLight(def.Cost); // devolve se algo deu errado
+                CurrencyManager.Instance.AddLight(cost); // devolve se algo deu errado
                 Sfx.Play(SfxType.Error);
                 return false;
             }

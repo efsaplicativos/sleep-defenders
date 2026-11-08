@@ -17,3 +17,4 @@ MonoBehaviour:
   description: "Uso \xFAnico: atropela todos os monstros da faixa."
   rechargeTime: 30
   startsRecharging: 0
+  extraCostPerCopy: 0

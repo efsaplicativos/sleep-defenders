@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: SleepDefenders::SleepDefenders.ToyDefinition
   prefab: {fileID: 1030407128594819245, guid: 14c78a33293ebd44e823127aa9d48433, type: 3}
   icon: {fileID: 21300000, guid: 725692e4278fd384fba2f5e184ee5e5f, type: 3}
-  description: Gera 25 de Luz a cada 10 segundos.
+  description: "Gera 25 de Luz a cada 10 segundos e ilumina as casas em volta. Cada
+    abajur no tapete deixa o pr\xF3ximo 25 mais caro."
   rechargeTime: 7.5
   startsRecharging: 0
+  extraCostPerCopy: 25

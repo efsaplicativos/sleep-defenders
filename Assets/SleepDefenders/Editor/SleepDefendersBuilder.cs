@@ -34,6 +34,7 @@ namespace SleepDefenders.EditorTools
         public const string ScenePath = Root + "/Scenes/Game.unity";
         public const string CampaignPath = Gen + "/Data/Campanha.asset";
         private const string LaneGuardPrefabPath = Gen + "/Prefabs/LaneGuard_RatinhoDeCorda.prefab";
+        public const string LightEaterPrefabPath = Gen + "/Prefabs/Enemy_DevoradorDeLuz.prefab";
 
         // Orientação dos modelos do Tripo: os .glb exportados pelo Tripo (export_orientation "+x"),
         // importados pelo glTFast, ficam com a FRENTE apontando para -X no Unity.
@@ -135,20 +136,22 @@ namespace SleepDefenders.EditorTools
                 var creeper = CreateCreeperPrefab();
                 var closet = CreateClosetPrefab();
                 var flyer = CreateFlyerPrefab();
+                var eater = CreateLightEaterPrefab();
 
                 CreateLaneGuardPrefab(); // a cena carrega o prefab pelo caminho (ver BuildScene)
 
                 Progress("Cards", 0.72f);
                 var defs = new List<ToyDefinition>
                 {
-                    CreateDefinition("Toy_Abajur", lamp, "toy_lamp", 7.5f, false, "Gera 25 de Luz a cada 10 segundos."),
-                    CreateDefinition("Toy_RoboLaser", robot, "laser_robot", 7.5f, false, "Dispara lasers nos monstros da sua faixa."),
-                    CreateDefinition("Toy_Urso", bear, "teddy_bear", 25f, false, "Muita vida. Segura os monstros."),
+                    CreateDefinition("Toy_Abajur", lamp, "toy_lamp", 7.5f, false,
+                        "Gera 25 de Luz a cada 10 segundos e ilumina as casas em volta. Cada abajur no tapete deixa o próximo 25 mais caro.", 25),
+                    CreateDefinition("Toy_RoboLaser", robot, "laser_robot", 12f, false, "Dispara lasers nos monstros da sua faixa. No escuro, atira na metade da velocidade."),
+                    CreateDefinition("Toy_Urso", bear, "teddy_bear", 25f, false, "Muita vida. Segura os monstros (até o Devorador de Luz)."),
                     CreateDefinition("Toy_CarrinhoRC", car, "rc_car", 30f, false, "Uso único: atropela todos os monstros da faixa."),
                 };
 
                 Progress("Campanha (5 noites)", 0.76f);
-                Campaign campaign = CreateCampaign(defs, creeper, closet, flyer);
+                Campaign campaign = CreateCampaign(defs, creeper, closet, flyer, eater);
 
                 Progress("Cena", 0.8f);
                 BuildScene(scene, mats, sprites, vfx, orb, beam, defs, campaign);
@@ -365,7 +368,7 @@ namespace SleepDefenders.EditorTools
 
         private class Mats
         {
-            public Material floor, wall, rugA, rugB, rugBorder, highlight, laser, laserTrail, orb, orbGlow, beam,
+            public Material floor, wall, rugA, rugB, rugBorder, highlight, lightCell, laser, laserTrail, orb, orbGlow, beam,
                 puff, additive, moon, windowGlass, wood, placeholder;
         }
 
@@ -414,6 +417,12 @@ namespace SleepDefenders.EditorTools
             m.highlight = Mat("Cell_Highlight", unlit, x =>
             {
                 x.SetColor("_BaseColor", new Color(1f, 1f, 1f, 0.45f));
+                MakeTransparent(x, false);
+            });
+            // Camada de luz/escuridão de cada casa (a cor vem do LightField por MaterialPropertyBlock).
+            m.lightCell = Mat("Cell_Light", unlit, x =>
+            {
+                x.SetColor("_BaseColor", new Color(0f, 0f, 0f, 0.5f));
                 MakeTransparent(x, false);
             });
             m.laser = Mat("Laser", unlit, x => x.SetColor("_BaseColor", new Color(0.6f, 3.2f, 3.6f)));
@@ -939,6 +948,22 @@ namespace SleepDefenders.EditorTools
             return SavePrefab(root, "Enemy_PesadeloAlado").GetComponent<WingedNightmare>();
         }
 
+        private static LightEater CreateLightEaterPrefab()
+        {
+            // Corpo baixo e comprido: passa "por baixo" dos robôs e carrinhos.
+            GameObject root = NewEnemyRoot("Enemy_DevoradorDeLuz", 0.3f, 0.7f);
+            Transform visual = BuildVisual(root, "light_eater", 0.62f, 1.05f, EnemyYaw, () => Placeholder(
+                (PrimitiveType.Capsule, new Vector3(0, 0.3f, 0), new Vector3(0.45f, 0.4f, 0.4f), new Color(0.06f, 0.06f, 0.14f)),
+                (PrimitiveType.Sphere, new Vector3(0.05f, 0.25f, 0), new Vector3(0.3f, 0.25f, 0.3f), new Color(1f, 0.8f, 0.3f)),
+                (PrimitiveType.Sphere, new Vector3(-0.3f, 0.42f, 0.08f), Vector3.one * 0.08f, new Color(0.3f, 1f, 1f)),
+                (PrimitiveType.Sphere, new Vector3(-0.3f, 0.42f, -0.08f), Vector3.one * 0.08f, new Color(0.3f, 1f, 1f))));
+            FinishEnemy(root, visual, false);
+            var e = root.AddComponent<LightEater>();
+            SetFields(e, ("displayName", "Devorador de Luz"), ("maxHP", 160f), ("moveSpeed", 0.42f), ("attackDamage", 30f),
+                ("attackInterval", 0.8f), ("deathPuffColor", new Color(1f, 0.85f, 0.4f, 0.9f)));
+            return SavePrefab(root, "Enemy_DevoradorDeLuz").GetComponent<LightEater>();
+        }
+
         // ======================================================================= ÚLTIMA DEFESA
 
         private static void CreateLaneGuardPrefab()
@@ -959,14 +984,14 @@ namespace SleepDefenders.EditorTools
         // ======================================================================= CAMPANHA (5 NOITES)
 
         /// <summary>
-        /// As 5 noites do jogo, com dificuldade crescente. Cada noite libera um brinquedo ou monstro novo:
-        ///   Noite 1  Abajur + Robô, só Sombras, só nas 3 faixas do meio (aprendizado)
-        ///   Noite 2  + Urso de Pelúcia, chegam os Pesadelos Alados
-        ///   Noite 3  + Carrinho RC, chega o Monstro do Armário
-        ///   Noite 4  todos os brinquedos e monstros, com uma onda grande no meio
-        ///   Noite 5  a noite mais longa, com duas ondas grandes
+        /// As 5 noites do jogo. As decisões começam simples e ficam difíceis:
+        ///   Noite 1  Abajur + Robô, só Sombras nas 3 faixas do meio. Decisão: quantos abajures (cada um custa mais).
+        ///   Noite 2  + Urso, chegam os Pesadelos Alados e os monstros em dupla.
+        ///   Noite 3  + Carrinho RC e Monstro do Armário; o fundo do tapete fica escuro (Robôs lentos lá).
+        ///   Noite 4  só 3 colunas iluminadas, Devorador de Luz, um apagão e nada de Ratinhos de Corda.
+        ///   Noite 5  só a beira da cama iluminada, grupos de 3, dois apagões, sem Ratinhos.
         /// </summary>
-        private static Campaign CreateCampaign(List<ToyDefinition> defs, EnemyBase creeper, EnemyBase closet, EnemyBase flyer)
+        private static Campaign CreateCampaign(List<ToyDefinition> defs, EnemyBase creeper, EnemyBase closet, EnemyBase flyer, EnemyBase eater)
         {
             var campaign = AssetDatabase.LoadAssetAtPath<Campaign>(CampaignPath);
             if (campaign == null)
@@ -976,19 +1001,35 @@ namespace SleepDefenders.EditorTools
             }
 
             ToyDefinition lamp = defs[0], robot = defs[1], bear = defs[2], car = defs[3];
+            ToyDefinition[] all = { lamp, robot, bear, car };
             int[] middle = { 1, 2, 3 };
+            EnemyBase c = creeper, f = flyer, k = closet, e = eater;
 
-            Wave W(string name, float interval, float delay, bool big, int[] lanes, params (EnemyBase prefab, int count)[] entries)
+            (EnemyBase prefab, int count)[] E(params (EnemyBase prefab, int count)[] entries) => entries;
+
+            // pack = monstros em fila na mesma faixa; at = faixas ao mesmo tempo; blackout = apagão ao começar.
+            Wave W(string name, float interval, float delay, (EnemyBase prefab, int count)[] entries,
+                bool big = false, int[] lanes = null, int pack = 1, int at = 1, bool blackout = false)
             {
-                var w = new Wave { name = name, spawnInterval = interval, delayBeforeWave = delay, isBigWave = big };
+                var w = new Wave
+                {
+                    name = name, spawnInterval = interval, delayBeforeWave = delay, isBigWave = big,
+                    packSize = pack, lanesAtOnce = at, blackout = blackout,
+                };
                 if (lanes != null) w.lanes.AddRange(lanes);
-                foreach (var e in entries) w.enemies.Add(new EnemySpawnEntry { prefab = e.prefab, count = e.count });
+                foreach (var en in entries) w.enemies.Add(new EnemySpawnEntry { prefab = en.prefab, count = en.count });
                 return w;
             }
 
-            NightDefinition N(string title, string subtitle, string tip, float initialDelay, ToyDefinition[] toys, params Wave[] waves)
+            NightDefinition N(string title, string subtitle, string tip, float initialDelay, int startingLight, int litColumns,
+                bool laneGuards, string[] rules, ToyDefinition[] toys, params Wave[] waves)
             {
-                var n = new NightDefinition { title = title, subtitle = subtitle, tip = tip, startingLight = 150, initialDelay = initialDelay, moonlight = true };
+                var n = new NightDefinition
+                {
+                    title = title, subtitle = subtitle, tip = tip, startingLight = startingLight, initialDelay = initialDelay,
+                    moonlight = true, litColumns = litColumns, laneGuards = laneGuards,
+                };
+                n.newRules.AddRange(rules);
                 n.toys.AddRange(toys);
                 n.waves.AddRange(waves);
                 return n;
@@ -997,58 +1038,59 @@ namespace SleepDefenders.EditorTools
             campaign.nights = new List<NightDefinition>
             {
                 N("Noite 1", "A Primeira Noite",
-                    "Coloque Abajures para juntar Luz e Robôs Laser para proteger as 3 faixas do meio.",
-                    30f, new[] { lamp, robot },
-                    W("Onda 1", 14f, 0f, false, new[] { 2 }, (creeper, 2)),
-                    W("Onda 2", 10f, 18f, false, middle, (creeper, 3)),
-                    W("Onda 3", 7f, 18f, false, middle, (creeper, 5)),
-                    W("Onda Final", 4f, 20f, true, middle, (creeper, 8))),
+                    "Abajures geram Luz e iluminam as casas em volta (ali as sombras ficam lentas). Cada abajur novo custa 25 a mais!",
+                    30f, 150, 9, true, new string[0], new[] { lamp, robot },
+                    W("Onda 1", 14f, 0f, E((c, 2)), lanes: new[] { 2 }),
+                    W("Onda 2", 10f, 18f, E((c, 3)), lanes: middle),
+                    W("Onda 3", 8f, 18f, E((c, 5)), lanes: middle),
+                    W("Onda Final", 8f, 20f, E((c, 8)), big: true, lanes: middle, pack: 2)),
 
                 N("Noite 2", "Asas no Escuro",
-                    "Pesadelos Alados voam por cima do primeiro brinquedo da faixa. Use Ursos de Pelúcia para segurá-los!",
-                    25f, new[] { lamp, robot, bear },
-                    W("Onda 1", 11f, 0f, false, null, (creeper, 3)),
-                    W("Onda 2", 9f, 18f, false, null, (creeper, 4), (flyer, 1)),
-                    W("Onda 3", 7f, 18f, false, null, (creeper, 6), (flyer, 2)),
-                    W("Onda 4", 6f, 18f, false, null, (creeper, 7), (flyer, 3)),
-                    W("Onda Final", 3.5f, 20f, true, null, (creeper, 10), (flyer, 4))),
+                    "Pesadelos Alados voam por cima do primeiro brinquedo da faixa, e os monstros começam a vir em dupla. Um Robô sozinho não basta!",
+                    25f, 150, 9, true, new[] { "Monstros em dupla" }, new[] { lamp, robot, bear },
+                    W("Onda 1", 11f, 0f, E((c, 3))),
+                    W("Onda 2", 9f, 18f, E((c, 4), (f, 1))),
+                    W("Onda 3", 10f, 18f, E((c, 6), (f, 2)), pack: 2),
+                    W("Onda 4", 10f, 18f, E((c, 7), (f, 3)), pack: 2),
+                    W("Onda Final", 8f, 20f, E((c, 10), (f, 4)), big: true, pack: 2)),
 
                 N("Noite 3", "O Armário Rangeu",
-                    "O Monstro do Armário é lento, mas aguenta muito dano. Guarde um Carrinho RC para emergências!",
-                    25f, new[] { lamp, robot, bear, car },
-                    W("Onda 1", 10f, 0f, false, null, (creeper, 4)),
-                    W("Onda 2", 8f, 18f, false, null, (creeper, 5), (flyer, 2)),
-                    W("Onda 3", 7f, 18f, false, null, (creeper, 6), (flyer, 2), (closet, 1)),
-                    W("Onda 4", 6f, 18f, false, null, (creeper, 7), (flyer, 3), (closet, 2)),
-                    W("Onda Final", 3.2f, 20f, true, null, (creeper, 11), (flyer, 4), (closet, 3))),
+                    "O fundo do tapete está escuro: lá os Robôs atiram na metade da velocidade. Ilumine a frente com Abajures!",
+                    25f, 150, 5, true, new[] { "Escuridão no fundo do tapete", "2 faixas ao mesmo tempo" }, all,
+                    W("Onda 1", 10f, 0f, E((c, 4))),
+                    W("Onda 2", 11f, 18f, E((c, 6), (f, 2)), pack: 2),
+                    W("Onda 3", 11f, 18f, E((c, 6), (f, 3), (k, 1)), pack: 2),
+                    W("Onda 4", 12f, 18f, E((c, 8), (f, 3), (k, 2)), pack: 2, at: 2),
+                    W("Onda Final", 10f, 20f, E((c, 12), (f, 5), (k, 3)), big: true, pack: 2, at: 2)),
 
                 N("Noite 4", "Tempestade de Sombras",
-                    "Uma onda enorme chega no meio da noite. Monte uma defesa forte em todas as faixas!",
-                    25f, new[] { lamp, robot, bear, car },
-                    W("Onda 1", 9f, 0f, false, null, (creeper, 5)),
-                    W("Onda 2", 7.5f, 16f, false, null, (creeper, 6), (flyer, 2)),
-                    W("Onda 3", 6.5f, 16f, false, null, (creeper, 7), (flyer, 3), (closet, 1)),
-                    W("Onda Grande", 3.5f, 18f, true, null, (creeper, 8), (flyer, 3), (closet, 2)),
-                    W("Onda 5", 5f, 16f, false, null, (creeper, 9), (flyer, 4), (closet, 2)),
-                    W("Onda Final", 2.8f, 20f, true, null, (creeper, 13), (flyer, 5), (closet, 4))),
+                    "Sem Ratinhos de Corda! O Devorador de Luz passa pelos brinquedos e come Abajures: só o Urso o segura. Cuidado com o apagão!",
+                    30f, 200, 3, false, new[] { "Apagão", "Sem Ratinhos de Corda" }, all,
+                    W("Onda 1", 10f, 0f, E((c, 5))),
+                    W("Onda 2", 11f, 16f, E((c, 6), (f, 2)), pack: 2),
+                    W("Onda 3", 11f, 16f, E((c, 6), (f, 2), (k, 1), (e, 1)), pack: 2),
+                    W("Onda Grande", 11f, 18f, E((c, 8), (f, 3), (k, 2), (e, 1)), big: true, pack: 2, at: 2, blackout: true),
+                    W("Onda 5", 12f, 16f, E((c, 9), (f, 3), (k, 2), (e, 2)), pack: 3),
+                    W("Onda Final", 11f, 20f, E((c, 13), (f, 5), (k, 3), (e, 2)), big: true, pack: 3, at: 2)),
 
                 N("Noite 5", "A Noite Mais Longa",
-                    "A última e mais longa noite. Aguente até o amanhecer!",
-                    25f, new[] { lamp, robot, bear, car },
-                    W("Onda 1", 8f, 0f, false, null, (creeper, 6)),
-                    W("Onda 2", 7f, 15f, false, null, (creeper, 7), (flyer, 3)),
-                    W("Onda 3", 6f, 15f, false, null, (creeper, 8), (flyer, 3), (closet, 2)),
-                    W("Onda Grande", 3.2f, 18f, true, null, (creeper, 10), (flyer, 4), (closet, 2)),
-                    W("Onda 5", 5f, 15f, false, null, (creeper, 10), (flyer, 5), (closet, 3)),
-                    W("Onda 6", 4.5f, 15f, false, null, (creeper, 11), (flyer, 5), (closet, 4)),
-                    W("Onda Final", 2.4f, 20f, true, null, (creeper, 16), (flyer, 7), (closet, 5))),
+                    "Só a beira da cama tem luz e as luzes vão se apagar duas vezes. Ilumine as faixas e proteja seus Abajures até o amanhecer!",
+                    30f, 200, 1, false, new[] { "Dois apagões", "Só a beira da cama iluminada", "Grupos de 3" }, all,
+                    W("Onda 1", 10f, 0f, E((c, 6)), pack: 2),
+                    W("Onda 2", 11f, 15f, E((c, 7), (f, 3)), pack: 2),
+                    W("Onda 3", 11f, 15f, E((c, 8), (f, 3), (k, 2), (e, 1)), pack: 2, at: 2),
+                    W("Onda Grande", 11f, 18f, E((c, 10), (f, 4), (k, 2), (e, 2)), big: true, pack: 3, at: 2, blackout: true),
+                    W("Onda 5", 12f, 15f, E((c, 10), (f, 4), (k, 3), (e, 2)), pack: 3),
+                    W("Onda 6", 12f, 15f, E((c, 11), (f, 5), (k, 3), (e, 3)), pack: 3, at: 2),
+                    W("Onda Final", 11f, 20f, E((c, 16), (f, 6), (k, 4), (e, 3)), big: true, pack: 3, at: 2, blackout: true)),
             };
 
             EditorUtility.SetDirty(campaign);
             return campaign;
         }
 
-        private static ToyDefinition CreateDefinition(string assetName, ToyBase prefab, string iconId, float recharge, bool startsRecharging, string description)
+        private static ToyDefinition CreateDefinition(string assetName, ToyBase prefab, string iconId, float recharge, bool startsRecharging,
+            string description, int extraCostPerCopy = 0)
         {
             string path = $"{Gen}/Data/{assetName}.asset";
             var def = AssetDatabase.LoadAssetAtPath<ToyDefinition>(path);
@@ -1062,6 +1104,7 @@ namespace SleepDefenders.EditorTools
             def.rechargeTime = recharge;
             def.startsRecharging = startsRecharging;
             def.description = description;
+            def.extraCostPerCopy = extraCostPerCopy;
             EditorUtility.SetDirty(def);
             return def;
         }
@@ -1207,7 +1250,14 @@ namespace SleepDefenders.EditorTools
             placementGo.transform.SetParent(managers, false);
             var placement = placementGo.AddComponent<ToyPlacementController>();
 
-            SetFields(game, ("spawner", spawner), ("campaign", campaign), ("currency", currency), ("placement", placement), ("moonlight", moonlight));
+            // Luz como território: escuridão por coluna, luz dos abajures e apagões (as camadas nascem no Play).
+            var lightGo = new GameObject("LightField (Luz e Escuridão)");
+            lightGo.transform.SetParent(managers, false);
+            var lightField = lightGo.AddComponent<LightField>();
+            SetFields(lightField, ("grid", grid), ("spawner", spawner), ("overlayMaterial", mats.lightCell), ("ambientColumns", first.litColumns));
+
+            SetFields(game, ("spawner", spawner), ("campaign", campaign), ("currency", currency), ("placement", placement), ("moonlight", moonlight),
+                ("lightField", lightField), ("laneGuards", guards.gameObject));
 
             // --- UI
             BuildUI(sprites, defs, campaign, currency, placement, grid, cam);
@@ -1779,20 +1829,22 @@ namespace SleepDefenders.EditorTools
     [InitializeOnLoad]
     internal static class SleepDefendersFirstRun
     {
+        // Cada atualização que precisa reconstruir deixa um "marco" (um asset que só a versão nova cria).
         private static bool NeedsBuild =>
-            !File.Exists(SleepDefendersBuilder.ScenePath) || !File.Exists(SleepDefendersBuilder.CampaignPath);
+            !File.Exists(SleepDefendersBuilder.ScenePath) || !File.Exists(SleepDefendersBuilder.CampaignPath)
+            || !File.Exists(SleepDefendersBuilder.LightEaterPrefabPath);
 
         static SleepDefendersFirstRun()
         {
             if (Application.isBatchMode || !NeedsBuild) return;
-            if (SessionState.GetBool("SleepDefenders.Prompted.v2", false)) return;
-            SessionState.SetBool("SleepDefenders.Prompted.v2", true);
+            if (SessionState.GetBool("SleepDefenders.Prompted.v3", false)) return;
+            SessionState.SetBool("SleepDefenders.Prompted.v3", true);
             EditorApplication.delayCall += () =>
             {
                 if (EditorApplication.isPlayingOrWillChangePlaymode || !NeedsBuild) return;
                 bool update = File.Exists(SleepDefendersBuilder.ScenePath);
                 string message = update
-                    ? "O jogo foi atualizado (5 noites, Ratinho de Corda e novo menu).\nReconstruir agora os prefabs e a cena?"
+                    ? "O jogo foi atualizado (escuridão, apagões, monstros em grupo e o Devorador de Luz).\nReconstruir agora os prefabs e a cena?"
                     : "Construir agora os prefabs e a cena do jogo?\n(Também disponível no menu Sleep Defenders.)";
                 if (!EditorUtility.DisplayDialog("Brinquedos vs. Monstros do Escuro", message, "Construir", "Depois")) return;
                 if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;

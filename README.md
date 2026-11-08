@@ -5,10 +5,12 @@
 Os brinquedos, sobre o tapete do quarto de uma criança, defendem a cama dos monstros das sombras.
 
 - **Defensores:** Abajur (gera Luz), Robô Laser (atira na própria faixa), Urso de Pelúcia (bloqueia) e Carrinho RC (limpa a faixa inteira).
-- **Inimigos:** Sombra Rastejante, Monstro do Armário e Pesadelo Alado.
-- **Recurso:** Luz, gerada pelos abajures ou pelo luar que cai do teto.
-- **Campanha:** 5 noites com dificuldade crescente. Cada noite libera brinquedos e monstros novos, e o progresso fica salvo.
-- **Última defesa:** um Ratinho de Corda em cada faixa salva a cama uma vez por noite.
+- **Inimigos:** Sombra Rastejante, Monstro do Armário, Pesadelo Alado e Devorador de Luz (caça os abajures).
+- **Recurso:** Luz, gerada pelos abajures (cada novo custa mais) ou pelo luar que cai do teto.
+- **Luz como território:** no escuro os Robôs atiram mais devagar; na luz dos abajures as sombras ficam lentas. As noites vão escurecendo e trazem apagões.
+- **Rajadas:** os monstros chegam em grupos e em várias faixas ao mesmo tempo.
+- **Campanha:** 5 noites com dificuldade crescente. Cada noite libera brinquedos, monstros e regras novas, e o progresso fica salvo.
+- **Última defesa:** um Ratinho de Corda em cada faixa salva a cama uma vez por noite (só nas noites 1–3).
 - **Arte:** modelos 3D gerados com a Tripo AI; texturas, ícones e tela de título com Nano Banana (Gemini).
 
 ## Como jogar

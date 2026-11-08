@@ -25,6 +25,9 @@ namespace SleepDefenders
         [SerializeField] private CurrencyManager currency;
         [SerializeField] private ToyPlacementController placement;
         [SerializeField] private MoonlightSpawner moonlight;
+        [SerializeField] private LightField lightField;
+        [Tooltip("Objeto que agrupa os Ratinhos de Corda (ligado/desligado conforme a noite).")]
+        [SerializeField] private GameObject laneGuards;
         [Tooltip("Começa a partida direto, sem a tela de título (útil para testes).")]
         [SerializeField] private bool skipMenu;
 
@@ -55,6 +58,7 @@ namespace SleepDefenders
             if (currency == null) currency = FindAnyObjectByType<CurrencyManager>();
             if (placement == null) placement = FindAnyObjectByType<ToyPlacementController>();
             if (moonlight == null) moonlight = FindAnyObjectByType<MoonlightSpawner>();
+            if (lightField == null) lightField = FindAnyObjectByType<LightField>();
         }
 
         private void OnDestroy()
@@ -78,7 +82,8 @@ namespace SleepDefenders
         // ------------------------------------------------------------------ Noites
 
         /// <summary>
-        /// Prepara a noite "index": ondas, Luz inicial, cards e luar. Só funciona antes da partida começar.
+        /// Prepara a noite "index": ondas, Luz inicial, cards, luar, escuridão do tapete e Ratinhos de Corda.
+        /// Só funciona antes da partida começar.
         /// </summary>
         public void ConfigureNight(int index)
         {
@@ -93,6 +98,8 @@ namespace SleepDefenders
                 if (currency != null) currency.ResetLight(night.startingLight);
                 if (placement != null) placement.SetAvailableToys(night.toys);
                 if (moonlight != null) moonlight.enabled = night.moonlight;
+                if (lightField != null) lightField.Configure(night.litColumns);
+                if (laneGuards != null) laneGuards.SetActive(night.laneGuards);
             }
             NightConfigured?.Invoke(NightIndex, night);
         }

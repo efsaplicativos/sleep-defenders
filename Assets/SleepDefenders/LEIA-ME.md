@@ -44,9 +44,9 @@ A célula sob o mouse fica **verde** (pode colocar), **vermelha** (ocupada) ou *
 
 | Brinquedo | Custo | HP | Recarga | Comportamento |
 |---|---|---|---|---|
-| Abajur | 50 | 80 | 7,5 s | Gera um orbe de **25 Luz** a cada 10 s (o primeiro sai em 5–8 s) |
-| Robô Laser | 100 | 100 | 7,5 s | Detecta monstros na própria faixa (Raycast ou BoxCast) e atira a cada 1,4 s (20 de dano) |
-| Urso de Pelúcia | 50 | 400 | 25 s | Bloqueia os monstros e vai "amassando" conforme perde HP |
+| Abajur | 50 **+25 por abajur no tapete** | 80 | 7,5 s | Gera um orbe de **25 Luz** a cada 10 s (o primeiro sai em 5–8 s) e **ilumina** as casas em volta (3×3) |
+| Robô Laser | 100 | 100 | 12 s | Detecta monstros na própria faixa (Raycast ou BoxCast) e atira a cada 1,4 s (20 de dano). **No escuro, a cada 2,8 s** |
+| Urso de Pelúcia | 50 | 400 | 25 s | Bloqueia os monstros (inclusive o Devorador de Luz) e vai "amassando" conforme perde HP |
 | Carrinho RC | 175 | — | 30 s | Uso único. Ao ser tocado, dispara pela faixa e destrói **todos** os monstros dela |
 
 | Monstro | HP | Velocidade | Dano / intervalo | Especial |
@@ -54,25 +54,45 @@ A célula sob o mouse fica **verde** (pode colocar), **vermelha** (ocupada) ou *
 | Sombra Rastejante | 100 | 0,32 (cruza o tapete em ~33 s) | 20 / 1 s | Inimigo padrão, corpo a corpo |
 | Monstro do Armário | 450 | 0,2 | 35 / 1,2 s | Tanque; abaixo de 30% de HP fica furioso (+60% de velocidade) |
 | Pesadelo Alado | 70 | 0,8 voando, 0,4 no chão | 15 / 0,8 s | Voa por cima da **primeira** defesa e pousa para atacar a segunda |
+| Devorador de Luz | 160 | 0,42 | 30 / 0,8 s | Nasce na faixa com **mais abajures**, passa por baixo de Robôs e Carrinhos e só para para **comer Abajures** ou quando um **Urso** bloqueia. A luz não o deixa lento |
+
+### Luz e escuridão
+
+Cada casa do tapete está em um de três estados, mostrados por uma camada sobre o tapete:
+
+| Estado | Visual | Efeito |
+|---|---|---|
+| Escuro | casa sombreada | Robôs atiram na **metade da velocidade** |
+| Luz de cabeceira | normal | Normal. Cada noite define quantas colunas, a partir da cama, ela alcança |
+| Luz de abajur | brilho dourado | Robôs normais **e as sombras andam 35% mais devagar** |
+
+- **Apagão:** algumas ondas apagam os abajures por 12 s. Eles continuam gerando Luz, mas não iluminam.
+- **Decisão principal:** abajur perto da cama é economia segura; abajur na frente ilumina a zona de combate, mas fica exposto aos monstros e ao Devorador de Luz.
+
+### Ondas em rajada
+
+Cada onda tem `packSize` (monstros em fila na **mesma faixa**) e `lanesAtOnce` (faixas que recebem um grupo ao mesmo tempo). Um Robô sozinho não segura um grupo, então é preciso defender antes de o monstro aparecer.
 
 Outras regras:
 
-- **Luz inicial:** 150 em todas as noites.
+- **Luz inicial:** 150 nas noites 1–3 e 200 nas noites 4–5.
 - **Luar:** um raio de luar cai do teto a cada 8–12 s e deixa um orbe de 25 Luz numa célula aleatória.
 - **Orbes:** somem depois de 12 s se ninguém coletar (piscam nos últimos 3 s).
-- **Ratinho de Corda (última defesa):** cada faixa tem um ratinho de corda na beira da cama. Quando um monstro passa da borda esquerda do tapete, o ratinho dispara e derruba **todos** os monstros da faixa, inclusive os que voam. Funciona **uma vez por noite** em cada faixa.
+- **Ratinho de Corda (última defesa), só nas noites 1–3:** cada faixa tem um ratinho de corda na beira da cama. Quando um monstro passa da borda esquerda do tapete, o ratinho dispara e derruba **todos** os monstros da faixa, inclusive os que voam. Funciona **uma vez por noite** em cada faixa.
 - **Vitória:** todas as ondas da noite derrotadas. Isso libera a noite seguinte.
 - **Derrota:** um monstro alcança a cama.
 
 ### Campanha: 5 noites
 
-| Noite | Nome | Brinquedos | Monstros novos | Ondas | Duração aprox. |
-|---|---|---|---|---|---|
-| 1 | A Primeira Noite | Abajur, Robô Laser | Sombra Rastejante (só nas 3 faixas do meio) | 4 | ~4 min |
-| 2 | Asas no Escuro | + Urso de Pelúcia | Pesadelo Alado | 5 | ~6 min |
-| 3 | O Armário Rangeu | + Carrinho RC | Monstro do Armário | 5 | ~7 min |
-| 4 | Tempestade de Sombras | todos | (onda grande no meio) | 6 | ~8 min |
-| 5 | A Noite Mais Longa | todos | (duas ondas grandes) | 7 | ~11 min |
+As decisões começam fáceis e ficam difíceis:
+
+| Noite | Nome | Brinquedos | Novidades | Colunas com luz | Ratinhos | Duração aprox. |
+|---|---|---|---|---|---|---|
+| 1 | A Primeira Noite | Abajur, Robô Laser | Sombras só nas 3 faixas do meio. Decisão: quantos abajures (cada um custa mais) | 9 (tudo) | sim | ~4 min |
+| 2 | Asas no Escuro | + Urso de Pelúcia | Pesadelo Alado; monstros em dupla | 9 | sim | ~6 min |
+| 3 | O Armário Rangeu | + Carrinho RC | Monstro do Armário; escuridão no fundo; 2 faixas ao mesmo tempo | 5 | sim | ~6 min |
+| 4 | Tempestade de Sombras | todos | Devorador de Luz; um apagão; grupos de 3 | 3 | **não** | ~7,5 min |
+| 5 | A Noite Mais Longa | todos | Só a beira da cama iluminada; dois apagões | 1 | **não** | ~8,5 min |
 
 - **Menu:** mostra as 5 noites. As bloqueadas ficam apagadas e as concluídas ganham um selo dourado.
 - **Fim da noite:** a vitória mostra **Próxima Noite** e **Menu**; a derrota mostra **Tentar de Novo** e **Menu**.
@@ -83,10 +103,11 @@ Outras regras:
 
 **Onde mudar as noites:** os dados ficam em `Generated/Data/Campanha.asset`, e o Inspector mostra cada noite com:
 
-- nome e dica;
+- nome, dica e regras novas (aparecem em "Novidades" no menu);
 - Luz inicial e tempo de preparo;
+- colunas com luz de cabeceira (`litColumns`) e se há Ratinhos de Corda (`laneGuards`);
 - brinquedos liberados;
-- ondas, com os monstros, as quantidades, os intervalos e as **faixas permitidas** (`lanes`; vazio = todas).
+- ondas, com os monstros, as quantidades, os intervalos, as **faixas permitidas** (`lanes`; vazio = todas), os grupos (`packSize`, `lanesAtOnce`) e o apagão (`blackout`).
 
 Para mudanças permanentes, edite `CreateCampaign()` no `SleepDefendersBuilder.cs`, porque *Construir Jogo* recria esse arquivo.
 
@@ -95,7 +116,7 @@ Para mudanças permanentes, edite `CreateCampaign()` no `SleepDefendersBuilder.c
 ```
 Assets/SleepDefenders/
 ├── Art/
-│   ├── Models/     13 modelos .glb da Tripo (personagens, ratinho de corda e cenário)
+│   ├── Models/     14 modelos .glb da Tripo (personagens, ratinho de corda e cenário)
 │   ├── Icons/      ícones PNG transparentes dos cards
 │   ├── Textures/   piso, papel de parede e lã do tapete (seamless)
 │   └── UI/         title_art.png (tela de título)
@@ -113,8 +134,9 @@ Tools/AssetPipeline/generate_assets.py   pipeline Tripo + Nano Banana
 |---|---|
 | `Core/GridManager.cs` | Grade 5×9 com uma célula `GridCell` (BoxCollider na layer **Grid**) por posição.<br>• `TryGetCellAtScreenPoint` faz o Raycast do mouse e ignora cliques sobre a UI.<br>• Controla a ocupação: `CanPlace`, `TryPlaceToy`, `ReleaseCell`.<br>• Faz o highlight da célula e informa as posições de faixa, borda e cama. |
 | `Core/CurrencyManager.cs` | Luz: `AddLight`, `TrySpendLight`, `CanAfford` e o evento `OnLightChanged`. Atualiza o `TMP_Text` e pisca em vermelho quando falta Luz. |
-| `Core/GameManager.cs` | Estados Menu, Playing, Won e Lost; vitória, derrota e reinício. Configura a matriz de colisão.<br>• `ConfigureNight(i)` aplica a noite da campanha: ondas, Luz inicial, cards liberados e luar.<br>• Vencer libera a próxima noite; `Restart`, `NextNight` e `BackToMenu` recarregam a cena. |
-| `Levels/Campaign.cs` | `Campaign` (ScriptableObject com a lista de noites) e `NightDefinition` (nome, dica, Luz inicial, preparo, brinquedos e ondas). `Novelties(i)` lista o que aparece pela primeira vez na noite. |
+| `Core/GameManager.cs` | Estados Menu, Playing, Won e Lost; vitória, derrota e reinício. Configura a matriz de colisão.<br>• `ConfigureNight(i)` aplica a noite da campanha: ondas, Luz inicial, cards liberados, luar, escuridão e Ratinhos.<br>• Vencer libera a próxima noite; `Restart`, `NextNight` e `BackToMenu` recarregam a cena. |
+| `Levels/Campaign.cs` | `Campaign` (ScriptableObject com a lista de noites) e `NightDefinition` (nome, dica, Luz inicial, preparo, colunas com luz, Ratinhos, regras novas, brinquedos e ondas). `Novelties(i)` lista o que aparece pela primeira vez na noite. |
+| `Light/LightField.cs` | Luz como território: luz de cabeceira por coluna, luz 3×3 dos abajures e apagões. Responde `IsLit`, `IsLampLit`, `FireIntervalMultiplier` e `EnemySpeedFactorAt`, e desenha a camada escura/dourada sobre o tapete. Só recalcula quando um brinquedo entra ou sai, ou quando começa ou termina um apagão. |
 | `Levels/LevelProgress.cs` | Progresso: noites liberadas (PlayerPrefs) e qual noite carregar ao recarregar a cena. |
 | `Core/GameLayers.cs` | Constantes de tags e layers, matriz de colisão e a interface `IDamageable`. |
 | `Core/ComponentPool.cs` | Object pooling (`PoolRegistry.For(prefab)`) para projéteis e partículas. |
@@ -125,10 +147,10 @@ Tools/AssetPipeline/generate_assets.py   pipeline Tripo + Nano Banana
 | `Toys/TeddyBear.cs` | Urso: tanque que bloqueia e "amassa" visualmente. |
 | `Toys/RCCar.cs` | Carrinho: `OnTriggerEnter` com **Enemy**, dispara, atropela a faixa e se remove fora da tela. |
 | `Toys/LaneGuard.cs` | Ratinho de Corda: última defesa da faixa, fora da grade. Dispara quando um monstro passa da borda do tapete e derruba a faixa inteira, uma vez por noite. |
-| `Toys/ToyDefinition.cs` | ScriptableObject do card: prefab, ícone, descrição e recarga. |
+| `Toys/ToyDefinition.cs` | ScriptableObject do card: prefab, ícone, descrição, recarga e `extraCostPerCopy` (preço crescente; `CurrentCost` conta os iguais no tapete). |
 | `Enemies/EnemyBase.cs` | Movimento linear para a cama (−X).<br>• Ao encostar num brinquedo da mesma faixa (trigger com tag **Defender**), para e ataca em intervalos.<br>• Se cruzar a linha da cama, causa a derrota. |
-| `Enemies/ShadowCreeper.cs`, `ClosetMonster.cs`, `WingedNightmare.cs` | Variações dos monstros (fúria do tanque, voo que pula a primeira defesa). |
-| `Enemies/EnemySpawner.cs` | Ondas em faixas aleatórias, só entre as **faixas permitidas** da onda (`lanes`) e sem repetir a faixa seguida, com embaralhamento Fisher–Yates. O evento `WaveStarted` faz o HUD mostrar o aviso de cada onda e o de onda grande. |
+| `Enemies/ShadowCreeper.cs`, `ClosetMonster.cs`, `WingedNightmare.cs`, `LightEater.cs` | Variações dos monstros (fúria do tanque, voo que pula a primeira defesa, Devorador que caça abajures). |
+| `Enemies/EnemySpawner.cs` | Ondas em faixas aleatórias, só entre as **faixas permitidas** da onda (`lanes`) e sem repetir a faixa seguida, com embaralhamento Fisher–Yates.<br>• Rajadas: `packSize` monstros em fila por faixa, em `lanesAtOnce` faixas ao mesmo tempo.<br>• Monstros podem escolher a faixa (`EnemyBase.PreferredLane`).<br>• O evento `WaveStarted` faz o HUD mostrar o aviso de cada onda e o `LightField` disparar os apagões. |
 | `Light/LightOrb.cs`, `MoonlightSpawner.cs` | Orbes coletáveis (layer **Pickup**) e o luar que cai do teto. |
 | `Gameplay/ToyPlacementController.cs` | Entrada do jogador (Input System): cards, posicionar, coletar, guardar e atalhos. `SetAvailableToys` mostra só os cards liberados na noite e renumera os atalhos. |
 | `UI/*` | Cards com recarga, botão Guardar, cards das noites (`NightButtonUI`) e HUD (menu de noites, ondas, barra de progresso, avisos e telas de fim). |
@@ -154,7 +176,7 @@ O construtor cria tudo isso sozinho. A matriz de colisão é aplicada em tempo d
 | Toy_Abajur | BoxCollider (físico) | — | Defender / Defender | Point Light "Glow" pulsando |
 | Toy_RoboLaser | BoxCollider (**Trigger**) | — | Defender / Defender | Filho `Muzzle` = ponta do laser |
 | Toy_Urso | BoxCollider (físico) | — | Defender / Defender | HP 400 |
-| Enemy_* (3 monstros) | CapsuleCollider (**Trigger**) | **Cinemático**, interpolado | Enemy / Enemy | Movido com `MovePosition` |
+| Enemy_* (4 monstros) | CapsuleCollider (**Trigger**) | **Cinemático**, interpolado | Enemy / Enemy | Movido com `MovePosition` |
 | LaserProjectile | SphereCollider (**Trigger**) | **Cinemático** | Projectile / Projectile | Com TrailRenderer |
 | Toy_CarrinhoRC | BoxCollider (**Trigger**) | Rigidbody (cinemático) | Defender / Defender | Ativado por `OnTriggerEnter` com tag **Enemy** |
 | LightOrb | SphereCollider (Trigger) | — | LightOrb / Pickup | Clicável |
@@ -205,7 +227,7 @@ Depois de trocar modelos, rode **Sleep Defenders → Construir Jogo** de novo. A
 
 *Window → General → Test Runner → PlayMode → Run All*. Rode o *Construir Jogo* antes.
 
-Os 14 testes guardam e restauram o seu progresso das noites. Eles cobrem:
+Os 21 testes guardam e restauram o seu progresso das noites. Um deles joga a Noite 5 inteira contra uma defesa forte (~1 min). Eles cobrem:
 
 - Raycast do mouse na grade.
 - Custo, ocupação e recarga.
@@ -221,6 +243,13 @@ Os 14 testes guardam e restauram o seu progresso das noites. Eles cobrem:
 - Noite 1 com só 2 cards e monstros só nas faixas do meio.
 - Vencer uma noite libera a próxima, que começa direto.
 - Noites bloqueadas desabilitadas no menu.
+- Preço do Abajur subindo e descendo com os abajures no tapete.
+- Ondas chegando em grupos, em faixas diferentes.
+- Escuridão deixando o Robô mais lento e a luz do abajur deixando as sombras mais lentas.
+- Apagão disparado pela onda e as luzes voltando.
+- Devorador de Luz passando pelo Robô, comendo o Abajur e parando no Urso.
+- Noites mais escuras, sem Ratinhos nas noites 4–5 e com apagões.
+- Noite 5 vencível com uma defesa forte e bem iluminada.
 
 ## 9. Problemas comuns
 

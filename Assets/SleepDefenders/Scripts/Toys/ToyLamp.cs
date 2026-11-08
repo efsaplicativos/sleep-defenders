@@ -3,8 +3,11 @@ using UnityEngine;
 namespace SleepDefenders
 {
     /// <summary>
-    /// Abajur de Brinquedo — gerador de recurso.
-    /// Custo 50. A cada 10 segundos produz um orbe de 25 de Luz que o jogador clica para coletar.
+    /// Abajur de Brinquedo — gerador de recurso e fonte de luz.
+    /// Custo 50 (+25 para cada abajur já no tapete). A cada 10 segundos produz um orbe de 25 de Luz
+    /// que o jogador clica para coletar. Também ilumina as casas em volta (ver LightField):
+    /// ali os Robôs atiram normalmente e as sombras ficam mais lentas. No apagão a lâmpada se apaga,
+    /// mas o abajur continua gerando Luz.
     /// </summary>
     public class ToyLamp : ToyBase
     {
@@ -44,7 +47,11 @@ namespace SleepDefenders
             {
                 glowBoost = Mathf.MoveTowards(glowBoost, 0f, Time.deltaTime * 2f);
                 float flicker = 1f + Mathf.Sin(Time.time * 3f + Column) * 0.08f;
-                glowLight.intensity = (glowBaseIntensity + glowBoost * glowPulseIntensity) * flicker;
+                float target = (glowBaseIntensity + glowBoost * glowPulseIntensity) * flicker;
+                // Apagão: a lâmpada fica quase apagada, com umas piscadas fracas.
+                if (LightField.Instance != null && LightField.Instance.IsBlackout)
+                    target = Mathf.Sin(Time.time * 23f + Column * 5f) > 0.93f ? 0.6f : 0.05f;
+                glowLight.intensity = target;
             }
         }
 

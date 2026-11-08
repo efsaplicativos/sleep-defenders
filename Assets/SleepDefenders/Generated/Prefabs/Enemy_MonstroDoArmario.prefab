@@ -171,7 +171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SleepDefenders::SleepDefenders.ClosetMonster
   displayName: "Monstro do Arm\xE1rio"
   maxHP: 450
-  moveSpeed: 0.28
+  moveSpeed: 0.2
   attackDamage: 35
   attackInterval: 1.2
   deathPuffColor: {r: 0.3, g: 0.25, b: 0.6, a: 0.9}

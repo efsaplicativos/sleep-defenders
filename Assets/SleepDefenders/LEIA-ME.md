@@ -21,16 +21,18 @@ Os brinquedos, sobre o tapete do quarto, defendem a cama dos monstros das sombra
    - instala o *TMP Essential Resources*;
    - gera materiais, sprites de UI, prefabs, os `ToyDefinition` e a cena `Assets/SleepDefenders/Scenes/Game.unity`;
    - coloca a cena na Build list.
-4. Aperte **Play** e depois **Começar a Noite**.
+4. Aperte **Play**, escolha a noite no menu e clique em **Começar Noite N**.
 
 > **Atenção:** *Construir Jogo* recria tudo em `Assets/SleepDefenders/Generated` e a cena `Game.unity`. Alterações manuais nesses arquivos se perdem.
 > Para ajustes permanentes, edite os valores no `SleepDefendersBuilder.cs` (seção 6) ou duplique o prefab para fora de `Generated`.
+>
+> Ao atualizar o projeto para uma versão nova (por exemplo, quando entraram as 5 noites), o Unity pergunta se quer reconstruir. Aceite, ou use o menu *Construir Jogo*.
 
 ## 2. Controles
 
 | Ação | Mouse | Teclado |
 |---|---|---|
-| Escolher brinquedo | clicar no card | `1`–`4` |
+| Escolher brinquedo | clicar no card | `1`, `2`, `3`... (na ordem dos cards) |
 | Posicionar | clicar numa célula livre do tapete | — |
 | Coletar Luz | clicar no orbe brilhante | — |
 | Guardar (remover) brinquedo | botão **Guardar**, depois clicar no brinquedo | `R` |
@@ -49,28 +51,51 @@ A célula sob o mouse fica **verde** (pode colocar), **vermelha** (ocupada) ou *
 
 | Monstro | HP | Velocidade | Dano / intervalo | Especial |
 |---|---|---|---|---|
-| Sombra Rastejante | 100 | 0,45 | 20 / 1 s | Inimigo padrão, corpo a corpo |
-| Monstro do Armário | 450 | 0,28 | 35 / 1,2 s | Tanque; abaixo de 30% de HP fica furioso (+60% de velocidade) |
-| Pesadelo Alado | 70 | 1,1 voando, 0,55 no chão | 15 / 0,8 s | Voa por cima da **primeira** defesa e pousa para atacar a segunda |
+| Sombra Rastejante | 100 | 0,32 (cruza o tapete em ~33 s) | 20 / 1 s | Inimigo padrão, corpo a corpo |
+| Monstro do Armário | 450 | 0,2 | 35 / 1,2 s | Tanque; abaixo de 30% de HP fica furioso (+60% de velocidade) |
+| Pesadelo Alado | 70 | 0,8 voando, 0,4 no chão | 15 / 0,8 s | Voa por cima da **primeira** defesa e pousa para atacar a segunda |
 
 Outras regras:
 
-- **Luz inicial:** 150.
+- **Luz inicial:** 150 em todas as noites.
 - **Luar:** um raio de luar cai do teto a cada 8–12 s e deixa um orbe de 25 Luz numa célula aleatória.
 - **Orbes:** somem depois de 12 s se ninguém coletar (piscam nos últimos 3 s).
-- **Vitória:** todas as ondas derrotadas.
+- **Ratinho de Corda (última defesa):** cada faixa tem um ratinho de corda na beira da cama. Quando um monstro passa da borda esquerda do tapete, o ratinho dispara e derruba **todos** os monstros da faixa, inclusive os que voam. Funciona **uma vez por noite** em cada faixa.
+- **Vitória:** todas as ondas da noite derrotadas. Isso libera a noite seguinte.
 - **Derrota:** um monstro alcança a cama.
 
-**Ondas:** são 5, de "Onda 1" até a "Onda Final", que é a onda grande. Elas são definidas em `DefaultWaves()` no construtor, e a primeira começa após 22 s.
+### Campanha: 5 noites
 
-Na cena, o componente **EnemySpawner** expõe a lista `waves`. Cada onda tem inimigos com quantidade, intervalo e espera. Dá para editar ali para testar, mas lembre que a cena é recriada a cada *Construir Jogo*.
+| Noite | Nome | Brinquedos | Monstros novos | Ondas | Duração aprox. |
+|---|---|---|---|---|---|
+| 1 | A Primeira Noite | Abajur, Robô Laser | Sombra Rastejante (só nas 3 faixas do meio) | 4 | ~4 min |
+| 2 | Asas no Escuro | + Urso de Pelúcia | Pesadelo Alado | 5 | ~6 min |
+| 3 | O Armário Rangeu | + Carrinho RC | Monstro do Armário | 5 | ~7 min |
+| 4 | Tempestade de Sombras | todos | (onda grande no meio) | 6 | ~8 min |
+| 5 | A Noite Mais Longa | todos | (duas ondas grandes) | 7 | ~11 min |
+
+- **Menu:** mostra as 5 noites. As bloqueadas ficam apagadas e as concluídas ganham um selo dourado.
+- **Fim da noite:** a vitória mostra **Próxima Noite** e **Menu**; a derrota mostra **Tentar de Novo** e **Menu**.
+- **Progresso:** fica salvo em `PlayerPrefs` e continua entre uma sessão e outra.
+- **Atalhos no Editor:**
+  - *Sleep Defenders → Progresso → Liberar Todas as Noites*;
+  - *Sleep Defenders → Progresso → Zerar Progresso*.
+
+**Onde mudar as noites:** os dados ficam em `Generated/Data/Campanha.asset`, e o Inspector mostra cada noite com:
+
+- nome e dica;
+- Luz inicial e tempo de preparo;
+- brinquedos liberados;
+- ondas, com os monstros, as quantidades, os intervalos e as **faixas permitidas** (`lanes`; vazio = todas).
+
+Para mudanças permanentes, edite `CreateCampaign()` no `SleepDefendersBuilder.cs`, porque *Construir Jogo* recria esse arquivo.
 
 ## 4. Estrutura de pastas
 
 ```
 Assets/SleepDefenders/
 ├── Art/
-│   ├── Models/     12 modelos .glb da Tripo (personagens + cenário)
+│   ├── Models/     13 modelos .glb da Tripo (personagens, ratinho de corda e cenário)
 │   ├── Icons/      ícones PNG transparentes dos cards
 │   ├── Textures/   piso, papel de parede e lã do tapete (seamless)
 │   └── UI/         title_art.png (tela de título)
@@ -88,7 +113,9 @@ Tools/AssetPipeline/generate_assets.py   pipeline Tripo + Nano Banana
 |---|---|
 | `Core/GridManager.cs` | Grade 5×9 com uma célula `GridCell` (BoxCollider na layer **Grid**) por posição.<br>• `TryGetCellAtScreenPoint` faz o Raycast do mouse e ignora cliques sobre a UI.<br>• Controla a ocupação: `CanPlace`, `TryPlaceToy`, `ReleaseCell`.<br>• Faz o highlight da célula e informa as posições de faixa, borda e cama. |
 | `Core/CurrencyManager.cs` | Luz: `AddLight`, `TrySpendLight`, `CanAfford` e o evento `OnLightChanged`. Atualiza o `TMP_Text` e pisca em vermelho quando falta Luz. |
-| `Core/GameManager.cs` | Estados Menu, Playing, Won e Lost; vitória, derrota e reinício. Configura a matriz de colisão. |
+| `Core/GameManager.cs` | Estados Menu, Playing, Won e Lost; vitória, derrota e reinício. Configura a matriz de colisão.<br>• `ConfigureNight(i)` aplica a noite da campanha: ondas, Luz inicial, cards liberados e luar.<br>• Vencer libera a próxima noite; `Restart`, `NextNight` e `BackToMenu` recarregam a cena. |
+| `Levels/Campaign.cs` | `Campaign` (ScriptableObject com a lista de noites) e `NightDefinition` (nome, dica, Luz inicial, preparo, brinquedos e ondas). `Novelties(i)` lista o que aparece pela primeira vez na noite. |
+| `Levels/LevelProgress.cs` | Progresso: noites liberadas (PlayerPrefs) e qual noite carregar ao recarregar a cena. |
 | `Core/GameLayers.cs` | Constantes de tags e layers, matriz de colisão e a interface `IDamageable`. |
 | `Core/ComponentPool.cs` | Object pooling (`PoolRegistry.For(prefab)`) para projéteis e partículas. |
 | `Toys/ToyBase.cs` | Base abstrata: `Custo`, `HP`, `Lane`, `TakeDamage`, `Die`/`Remove` e o evento `Destroyed`, que libera a célula. |
@@ -97,13 +124,14 @@ Tools/AssetPipeline/generate_assets.py   pipeline Tripo + Nano Banana
 | `Toys/LaserProjectile.cs` | Laser: Rigidbody cinemático, `OnTriggerEnter` com a tag **Enemy** da mesma faixa. |
 | `Toys/TeddyBear.cs` | Urso: tanque que bloqueia e "amassa" visualmente. |
 | `Toys/RCCar.cs` | Carrinho: `OnTriggerEnter` com **Enemy**, dispara, atropela a faixa e se remove fora da tela. |
+| `Toys/LaneGuard.cs` | Ratinho de Corda: última defesa da faixa, fora da grade. Dispara quando um monstro passa da borda do tapete e derruba a faixa inteira, uma vez por noite. |
 | `Toys/ToyDefinition.cs` | ScriptableObject do card: prefab, ícone, descrição e recarga. |
 | `Enemies/EnemyBase.cs` | Movimento linear para a cama (−X).<br>• Ao encostar num brinquedo da mesma faixa (trigger com tag **Defender**), para e ataca em intervalos.<br>• Se cruzar a linha da cama, causa a derrota. |
 | `Enemies/ShadowCreeper.cs`, `ClosetMonster.cs`, `WingedNightmare.cs` | Variações dos monstros (fúria do tanque, voo que pula a primeira defesa). |
-| `Enemies/EnemySpawner.cs` | Ondas em faixas aleatórias (evita repetir a faixa seguida), com embaralhamento Fisher–Yates. O evento `WaveStarted` faz o HUD mostrar o aviso de cada onda e o de onda grande. |
+| `Enemies/EnemySpawner.cs` | Ondas em faixas aleatórias, só entre as **faixas permitidas** da onda (`lanes`) e sem repetir a faixa seguida, com embaralhamento Fisher–Yates. O evento `WaveStarted` faz o HUD mostrar o aviso de cada onda e o de onda grande. |
 | `Light/LightOrb.cs`, `MoonlightSpawner.cs` | Orbes coletáveis (layer **Pickup**) e o luar que cai do teto. |
-| `Gameplay/ToyPlacementController.cs` | Entrada do jogador (Input System): cards, posicionar, coletar, guardar e atalhos. |
-| `UI/*` | Cards com recarga, botão Guardar e HUD (menu, ondas, barra de progresso, telas de fim). |
+| `Gameplay/ToyPlacementController.cs` | Entrada do jogador (Input System): cards, posicionar, coletar, guardar e atalhos. `SetAvailableToys` mostra só os cards liberados na noite e renumera os atalhos. |
+| `UI/*` | Cards com recarga, botão Guardar, cards das noites (`NightButtonUI`) e HUD (menu de noites, ondas, barra de progresso, avisos e telas de fim). |
 | `FX/*` | Animação procedural (respiração, passos, voo, ataque, *squash*), flash de dano, partículas e efeitos sonoros sintetizados. |
 
 As personagens não têm rig: toda a animação é **procedural**, no `ProceduralAnimator`, aplicada ao filho `Visual`. Assim, qualquer modelo novo da Tripo funciona sem precisar de Animator.
@@ -130,6 +158,7 @@ O construtor cria tudo isso sozinho. A matriz de colisão é aplicada em tempo d
 | LaserProjectile | SphereCollider (**Trigger**) | **Cinemático** | Projectile / Projectile | Com TrailRenderer |
 | Toy_CarrinhoRC | BoxCollider (**Trigger**) | Rigidbody (cinemático) | Defender / Defender | Ativado por `OnTriggerEnter` com tag **Enemy** |
 | LightOrb | SphereCollider (Trigger) | — | LightOrb / Pickup | Clicável |
+| LaneGuard_RatinhoDeCorda | — | — | — | Não usa física: compara posições com a lista de monstros vivos. Um por faixa, na beira da cama. |
 
 Por que o colisor dos monstros é **Trigger**? Monstros e brinquedos não podem se empurrar fisicamente. Com Rigidbody cinemático + trigger, o Unity dispara `OnTriggerEnter`/`OnTriggerStay` mesmo contra os colliders estáticos dos brinquedos, seja o box físico do Urso ou o trigger do Robô. Aí o próprio `EnemyBase` decide parar e atacar.
 
@@ -176,7 +205,7 @@ Depois de trocar modelos, rode **Sleep Defenders → Construir Jogo** de novo. A
 
 *Window → General → Test Runner → PlayMode → Run All*. Rode o *Construir Jogo* antes.
 
-Os 9 testes cobrem:
+Os 14 testes guardam e restauram o seu progresso das noites. Eles cobrem:
 
 - Raycast do mouse na grade.
 - Custo, ocupação e recarga.
@@ -186,10 +215,16 @@ Os 9 testes cobrem:
 - Carrinho limpando a faixa e liberando a célula.
 - Abajur gerando Luz.
 - Derrota ao chegar na cama.
+- Ratinho de Corda salvando a faixa uma única vez.
 - Vitória numa noite curta.
+- Campanha com 5 noites, cada uma mais longa que a anterior.
+- Noite 1 com só 2 cards e monstros só nas faixas do meio.
+- Vencer uma noite libera a próxima, que começa direto.
+- Noites bloqueadas desabilitadas no menu.
 
 ## 9. Problemas comuns
 
 - **Modelos cor-de-rosa / magenta.** O shader do glTFast não compilou. Na janela Project, abra *Packages → Unity glTFast → Runtime → Shader*, clique com o botão direito e use *Reimport*. Se o projeto estiver num caminho muito longo, o Windows (MAX_PATH) pode impedir a compilação: mova o projeto para um caminho curto.
 - **Texto da UI invisível.** Falta o *TMP Essential Resources*. Rode *Construir Jogo* de novo, porque ele instala automaticamente.
 - **Cliques não funcionam.** Confira se a cena tem um `EventSystem` com **InputSystemUIInputModule**. O projeto usa só o Input System novo.
+- **O Unity abriu mas nenhuma janela aparece, ou o Hub não abre o projeto.** Um Editor anterior pode ter ficado preso em segundo plano segurando o projeto. Finalize o `Unity.exe` no Gerenciador de Tarefas e abra de novo pelo Hub.

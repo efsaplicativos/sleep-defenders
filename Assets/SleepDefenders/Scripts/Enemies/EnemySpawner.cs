@@ -23,6 +23,8 @@ namespace SleepDefenders
         [Min(0f)] public float delayBeforeWave = 12f;
         [Tooltip("Ondas grandes mostram um aviso especial e soltam um 'bando' inicial.")]
         public bool isBigWave;
+        [Tooltip("Faixas por onde os monstros desta onda podem vir (0 = fundo ... 4 = frente). Vazio = todas.")]
+        public List<int> lanes = new List<int>();
 
         public int TotalCount
         {
@@ -37,7 +39,8 @@ namespace SleepDefenders
 
     /// <summary>
     /// Sistema de ondas. Cada onda é uma lista de monstros que nascem em faixas aleatórias
-    /// (evitando repetir a mesma faixa duas vezes seguidas), à direita do tapete.
+    /// (entre as faixas permitidas da onda, evitando repetir a mesma faixa duas vezes seguidas),
+    /// à direita do tapete. As ondas de cada noite vêm da Campanha (ver GameManager.ConfigureNight).
     /// </summary>
     public class EnemySpawner : MonoBehaviour
     {
@@ -67,7 +70,20 @@ namespace SleepDefenders
         public event Action<int, Wave> WaveStarted;
         public event Action<EnemyBase> EnemySpawned;
 
-        public void SetWaves(List<Wave> newWaves) => waves = newWaves;
+        public float InitialDelay => initialDelay;
+
+        public void SetWaves(List<Wave> newWaves) => waves = newWaves ?? new List<Wave>();
+
+        /// <summary>Prepara as ondas de uma noite (só tem efeito antes de Begin).</summary>
+        public void Configure(List<Wave> newWaves, float newInitialDelay)
+        {
+            if (IsRunning) return;
+            SetWaves(newWaves);
+            initialDelay = Mathf.Max(0f, newInitialDelay);
+            CurrentWaveIndex = -1;
+            Progress = 0f;
+            AllWavesSpawned = false;
+        }
 
         public void Begin()
         {
@@ -101,7 +117,7 @@ namespace SleepDefenders
                 List<EnemyBase> queue = BuildShuffledQueue(wave);
                 for (int n = 0; n < queue.Count; n++)
                 {
-                    SpawnEnemy(queue[n], PickLane());
+                    SpawnEnemy(queue[n], PickLane(wave));
                     spawned++;
                     Progress = total > 0 ? spawned / (float)total : 1f;
 
@@ -144,12 +160,27 @@ namespace SleepDefenders
             return list;
         }
 
-        private int PickLane()
+        private readonly List<int> laneOptions = new List<int>();
+
+        /// <summary>Sorteia uma faixa entre as permitidas pela onda, evitando repetir a anterior.</summary>
+        public int PickLane(Wave wave)
         {
             GridManager grid = GridManager.Instance;
             int rows = grid != null ? grid.Rows : 5;
-            int lane = UnityEngine.Random.Range(0, rows);
-            if (rows > 1 && lane == lastLane) lane = (lane + UnityEngine.Random.Range(1, rows)) % rows;
+
+            laneOptions.Clear();
+            if (wave != null)
+                foreach (int l in wave.lanes)
+                    if (l >= 0 && l < rows && !laneOptions.Contains(l)) laneOptions.Add(l);
+            if (laneOptions.Count == 0)
+                for (int l = 0; l < rows; l++) laneOptions.Add(l);
+
+            int lane = laneOptions[UnityEngine.Random.Range(0, laneOptions.Count)];
+            if (laneOptions.Count > 1 && lane == lastLane)
+            {
+                int i = (laneOptions.IndexOf(lane) + UnityEngine.Random.Range(1, laneOptions.Count)) % laneOptions.Count;
+                lane = laneOptions[i];
+            }
             lastLane = lane;
             return lane;
         }

@@ -20,10 +20,14 @@ namespace SleepDefenders
 
         private ToyCardUI selectedCard;
         private bool removeMode;
+        private readonly List<ToyCardUI> activeCards = new List<ToyCardUI>();
 
         public ToyCardUI SelectedCard => selectedCard;
         public bool RemoveMode => removeMode;
+        /// <summary>Todos os cards da barra (inclusive os ainda não liberados na noite atual).</summary>
         public IReadOnlyList<ToyCardUI> Cards => cards;
+        /// <summary>Cards visíveis na noite atual, na ordem dos atalhos 1, 2, 3...</summary>
+        public IReadOnlyList<ToyCardUI> ActiveCards => activeCards;
 
         private void Awake()
         {
@@ -32,6 +36,26 @@ namespace SleepDefenders
             foreach (ToyCardUI card in cards)
                 if (card != null) card.SetController(this);
             if (removeTool != null) removeTool.SetController(this);
+            SetAvailableToys(null);
+        }
+
+        /// <summary>
+        /// Mostra só os cards dos brinquedos liberados na noite (null ou vazio = todos)
+        /// e renumera os atalhos de teclado na ordem em que aparecem.
+        /// </summary>
+        public void SetAvailableToys(IList<ToyDefinition> toys)
+        {
+            ClearSelection();
+            activeCards.Clear();
+            foreach (ToyCardUI card in cards)
+            {
+                if (card == null) continue;
+                bool available = toys == null || toys.Count == 0 || toys.Contains(card.Definition);
+                card.gameObject.SetActive(available);
+                if (!available) continue;
+                activeCards.Add(card);
+                card.SetHotkey(activeCards.Count.ToString());
+            }
         }
 
         // ------------------------------------------------------------------ Seleção
@@ -147,8 +171,8 @@ namespace SleepDefenders
             if (kb.rKey.wasPressedThisFrame) ToggleRemoveMode();
 
             Key[] digits = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6 };
-            for (int i = 0; i < cards.Count && i < digits.Length; i++)
-                if (kb[digits[i]].wasPressedThisFrame) ToggleCard(cards[i]);
+            for (int i = 0; i < activeCards.Count && i < digits.Length; i++)
+                if (kb[digits[i]].wasPressedThisFrame) ToggleCard(activeCards[i]);
         }
 
         private bool TryCollectOrb(Vector2 screenPos)

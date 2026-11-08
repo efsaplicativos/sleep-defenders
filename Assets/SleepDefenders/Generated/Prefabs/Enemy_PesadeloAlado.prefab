@@ -171,12 +171,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: SleepDefenders::SleepDefenders.WingedNightmare
   displayName: Pesadelo Alado
   maxHP: 70
-  moveSpeed: 1.1
+  moveSpeed: 0.8
   attackDamage: 15
   attackInterval: 0.8
   deathPuffColor: {r: 0.55, g: 0.2, b: 0.6, a: 0.9}
   deathDuration: 0.45
-  landedSpeed: 0.55
+  landedSpeed: 0.4
   swoopHeight: 0.9
   cruiseHeight: 0.45
   landedHeight: 0.1

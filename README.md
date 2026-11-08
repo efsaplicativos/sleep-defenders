@@ -7,17 +7,19 @@ Os brinquedos, sobre o tapete do quarto de uma criança, defendem a cama dos mon
 - **Defensores:** Abajur (gera Luz), Robô Laser (atira na própria faixa), Urso de Pelúcia (bloqueia) e Carrinho RC (limpa a faixa inteira).
 - **Inimigos:** Sombra Rastejante, Monstro do Armário e Pesadelo Alado.
 - **Recurso:** Luz, gerada pelos abajures ou pelo luar que cai do teto.
+- **Campanha:** 5 noites com dificuldade crescente. Cada noite libera brinquedos e monstros novos, e o progresso fica salvo.
+- **Última defesa:** um Ratinho de Corda em cada faixa salva a cama uma vez por noite.
 - **Arte:** modelos 3D gerados com a Tripo AI; texturas, ícones e tela de título com Nano Banana (Gemini).
 
 ## Como jogar
 
 1. Abra a pasta do projeto no **Unity 6000.3** pelo Unity Hub.
 2. Abra a cena pelo menu **Sleep Defenders → Abrir Cena do Jogo**.
-3. Aperte **Play** e depois **Começar a Noite**.
+3. Aperte **Play**, escolha a noite e clique em **Começar Noite N**.
 
 Controles:
 
-- `1`–`4` ou clique no card: escolhe o brinquedo.
+- `1`, `2`, `3`... ou clique no card: escolhe o brinquedo.
 - Clique no tapete: posiciona o brinquedo.
 - Clique nos orbes: coleta Luz.
 - `R`: guarda (remove) um brinquedo.

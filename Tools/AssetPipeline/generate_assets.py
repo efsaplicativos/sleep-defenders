@@ -81,6 +81,10 @@ ASSETS = [
     ("rc_car", "toy",
      "A cute chunky toy remote-control monster truck, bright orange and blue plastic body, oversized knobby black "
      "rubber wheels, small antenna with a little flag, yellow lightning bolt decal on the side.", 25000),
+    # Ultima defesa de cada faixa (fica na beira da cama e varre a faixa uma vez).
+    ("windup_mouse", "toy",
+     "A cute vintage wind-up toy mouse, shiny silver-blue tin body, round pink ears, big friendly eyes, pink nose, "
+     "little red wheels underneath, large golden wind-up key on its back, curly spring tail, eager dash pose.", 20000),
 
     # --- Monstros do Escuro (inimigos) ---
     ("shadow_creeper", "monster",

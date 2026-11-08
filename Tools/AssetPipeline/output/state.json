@@ -58,5 +58,10 @@
     "task_id": "5727a4ea-958e-4257-b4ee-5db1a471e004",
     "status": "done",
     "credits": 30.0
+  },
+  "windup_mouse": {
+    "task_id": "e1a05f46-2e75-46db-b4d2-5e20f826f3be",
+    "status": "done",
+    "credits": 30.0
   }
 }

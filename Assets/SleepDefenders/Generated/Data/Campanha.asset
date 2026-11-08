@@ -1,0 +1,354 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7fb9b200f5b93e43b0eb7bea2d85a2c, type: 3}
+  m_Name: Campanha
+  m_EditorClassIdentifier: SleepDefenders::SleepDefenders.Campaign
+  nights:
+  - title: Noite 1
+    subtitle: A Primeira Noite
+    tip: "Coloque Abajures para juntar Luz e Rob\xF4s Laser para proteger as 3 faixas
+      do meio."
+    startingLight: 150
+    initialDelay: 30
+    moonlight: 1
+    toys:
+    - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
+    - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
+    waves:
+    - name: Onda 1
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 2
+      spawnInterval: 14
+      delayBeforeWave: 0
+      isBigWave: 0
+      lanes: 02000000
+    - name: Onda 2
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 3
+      spawnInterval: 10
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 010000000200000003000000
+    - name: Onda 3
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 5
+      spawnInterval: 7
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 010000000200000003000000
+    - name: Onda Final
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 8
+      spawnInterval: 4
+      delayBeforeWave: 20
+      isBigWave: 1
+      lanes: 010000000200000003000000
+  - title: Noite 2
+    subtitle: Asas no Escuro
+    tip: "Pesadelos Alados voam por cima do primeiro brinquedo da faixa. Use Ursos
+      de Pel\xFAcia para segur\xE1-los!"
+    startingLight: 150
+    initialDelay: 25
+    moonlight: 1
+    toys:
+    - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
+    - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
+    - {fileID: 11400000, guid: 970cfdcc3a6ad604f8a1167a1ace0e86, type: 2}
+    waves:
+    - name: Onda 1
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 3
+      spawnInterval: 11
+      delayBeforeWave: 0
+      isBigWave: 0
+      lanes: 
+    - name: Onda 2
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 4
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 1
+      spawnInterval: 9
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 
+    - name: Onda 3
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 6
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 2
+      spawnInterval: 7
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 
+    - name: Onda 4
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 7
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 3
+      spawnInterval: 6
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 
+    - name: Onda Final
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 10
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 4
+      spawnInterval: 3.5
+      delayBeforeWave: 20
+      isBigWave: 1
+      lanes: 
+  - title: Noite 3
+    subtitle: "O Arm\xE1rio Rangeu"
+    tip: "O Monstro do Arm\xE1rio \xE9 lento, mas aguenta muito dano. Guarde um Carrinho
+      RC para emerg\xEAncias!"
+    startingLight: 150
+    initialDelay: 25
+    moonlight: 1
+    toys:
+    - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
+    - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
+    - {fileID: 11400000, guid: 970cfdcc3a6ad604f8a1167a1ace0e86, type: 2}
+    - {fileID: 11400000, guid: 342e9ccd9a4e4b948b4149b49c39904d, type: 2}
+    waves:
+    - name: Onda 1
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 4
+      spawnInterval: 10
+      delayBeforeWave: 0
+      isBigWave: 0
+      lanes: 
+    - name: Onda 2
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 5
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 2
+      spawnInterval: 8
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 
+    - name: Onda 3
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 6
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 2
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 1
+      spawnInterval: 7
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 
+    - name: Onda 4
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 7
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 3
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 2
+      spawnInterval: 6
+      delayBeforeWave: 18
+      isBigWave: 0
+      lanes: 
+    - name: Onda Final
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 11
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 4
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 3
+      spawnInterval: 3.2
+      delayBeforeWave: 20
+      isBigWave: 1
+      lanes: 
+  - title: Noite 4
+    subtitle: Tempestade de Sombras
+    tip: Uma onda enorme chega no meio da noite. Monte uma defesa forte em todas
+      as faixas!
+    startingLight: 150
+    initialDelay: 25
+    moonlight: 1
+    toys:
+    - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
+    - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
+    - {fileID: 11400000, guid: 970cfdcc3a6ad604f8a1167a1ace0e86, type: 2}
+    - {fileID: 11400000, guid: 342e9ccd9a4e4b948b4149b49c39904d, type: 2}
+    waves:
+    - name: Onda 1
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 5
+      spawnInterval: 9
+      delayBeforeWave: 0
+      isBigWave: 0
+      lanes: 
+    - name: Onda 2
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 6
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 2
+      spawnInterval: 7.5
+      delayBeforeWave: 16
+      isBigWave: 0
+      lanes: 
+    - name: Onda 3
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 7
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 3
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 1
+      spawnInterval: 6.5
+      delayBeforeWave: 16
+      isBigWave: 0
+      lanes: 
+    - name: Onda Grande
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 8
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 3
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 2
+      spawnInterval: 3.5
+      delayBeforeWave: 18
+      isBigWave: 1
+      lanes: 
+    - name: Onda 5
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 9
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 4
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 2
+      spawnInterval: 5
+      delayBeforeWave: 16
+      isBigWave: 0
+      lanes: 
+    - name: Onda Final
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 13
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 5
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 4
+      spawnInterval: 2.8
+      delayBeforeWave: 20
+      isBigWave: 1
+      lanes: 
+  - title: Noite 5
+    subtitle: A Noite Mais Longa
+    tip: "A \xFAltima e mais longa noite. Aguente at\xE9 o amanhecer!"
+    startingLight: 150
+    initialDelay: 25
+    moonlight: 1
+    toys:
+    - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
+    - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
+    - {fileID: 11400000, guid: 970cfdcc3a6ad604f8a1167a1ace0e86, type: 2}
+    - {fileID: 11400000, guid: 342e9ccd9a4e4b948b4149b49c39904d, type: 2}
+    waves:
+    - name: Onda 1
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 6
+      spawnInterval: 8
+      delayBeforeWave: 0
+      isBigWave: 0
+      lanes: 
+    - name: Onda 2
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 7
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 3
+      spawnInterval: 7
+      delayBeforeWave: 15
+      isBigWave: 0
+      lanes: 
+    - name: Onda 3
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 8
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 3
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 2
+      spawnInterval: 6
+      delayBeforeWave: 15
+      isBigWave: 0
+      lanes: 
+    - name: Onda Grande
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 10
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 4
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 2
+      spawnInterval: 3.2
+      delayBeforeWave: 18
+      isBigWave: 1
+      lanes: 
+    - name: Onda 5
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 10
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 5
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 3
+      spawnInterval: 5
+      delayBeforeWave: 15
+      isBigWave: 0
+      lanes: 
+    - name: Onda 6
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 11
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 5
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 4
+      spawnInterval: 4.5
+      delayBeforeWave: 15
+      isBigWave: 0
+      lanes: 
+    - name: Onda Final
+      enemies:
+      - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
+        count: 16
+      - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
+        count: 7
+      - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
+        count: 5
+      spawnInterval: 2.4
+      delayBeforeWave: 20
+      isBigWave: 1
+      lanes: 

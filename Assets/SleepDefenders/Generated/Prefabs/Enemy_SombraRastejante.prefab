@@ -171,7 +171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SleepDefenders::SleepDefenders.ShadowCreeper
   displayName: Sombra Rastejante
   maxHP: 100
-  moveSpeed: 0.45
+  moveSpeed: 0.32
   attackDamage: 20
   attackInterval: 1
   deathPuffColor: {r: 0.35, g: 0.2, b: 0.55, a: 0.9}

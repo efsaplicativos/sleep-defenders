@@ -32,6 +32,8 @@ namespace SleepDefenders.EditorTools
         private const string TexturesDir = Root + "/Art/Textures";
         private const string UIArtDir = Root + "/Art/UI";
         public const string ScenePath = Root + "/Scenes/Game.unity";
+        public const string CampaignPath = Gen + "/Data/Campanha.asset";
+        private const string LaneGuardPrefabPath = Gen + "/Prefabs/LaneGuard_RatinhoDeCorda.prefab";
 
         // Orientação dos modelos do Tripo: os .glb exportados pelo Tripo (export_orientation "+x"),
         // importados pelo glTFast, ficam com a FRENTE apontando para -X no Unity.
@@ -75,6 +77,21 @@ namespace SleepDefenders.EditorTools
                 EditorSceneManager.OpenScene(ScenePath);
         }
 
+        [MenuItem("Sleep Defenders/Progresso/Liberar Todas as Noites", priority = 20)]
+        public static void UnlockAllNights()
+        {
+            var campaign = AssetDatabase.LoadAssetAtPath<Campaign>(CampaignPath);
+            LevelProgress.SetUnlockedCount(campaign != null ? campaign.Count : 5);
+            Debug.Log("[SleepDefenders] Todas as noites liberadas.");
+        }
+
+        [MenuItem("Sleep Defenders/Progresso/Zerar Progresso", priority = 21)]
+        public static void ResetNightProgress()
+        {
+            LevelProgress.ResetProgress();
+            Debug.Log("[SleepDefenders] Progresso zerado: só a Noite 1 está liberada.");
+        }
+
         /// <summary>Entrada para linha de comando: Unity -batchmode -executeMethod SleepDefenders.EditorTools.SleepDefendersBuilder.BuildBatch -quit</summary>
         public static void BuildBatch() => BuildAll();
 
@@ -89,6 +106,10 @@ namespace SleepDefenders.EditorTools
 
                 Progress("TextMesh Pro", 0.1f);
                 EnsureTMPEssentials();
+
+                // A cena nova é criada ANTES dos assets: NewScene descarrega assets que nada referencia,
+                // o que invalidaria prefabs, cards e a campanha criados logo antes.
+                Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
                 Progress("Pastas e texturas", 0.15f);
                 EnsureFolders();
@@ -115,6 +136,8 @@ namespace SleepDefenders.EditorTools
                 var closet = CreateClosetPrefab();
                 var flyer = CreateFlyerPrefab();
 
+                CreateLaneGuardPrefab(); // a cena carrega o prefab pelo caminho (ver BuildScene)
+
                 Progress("Cards", 0.72f);
                 var defs = new List<ToyDefinition>
                 {
@@ -124,9 +147,11 @@ namespace SleepDefenders.EditorTools
                     CreateDefinition("Toy_CarrinhoRC", car, "rc_car", 30f, false, "Uso único: atropela todos os monstros da faixa."),
                 };
 
+                Progress("Campanha (5 noites)", 0.76f);
+                Campaign campaign = CreateCampaign(defs, creeper, closet, flyer);
+
                 Progress("Cena", 0.8f);
-                var waves = DefaultWaves(creeper, closet, flyer);
-                BuildScene(mats, sprites, vfx, orb, beam, defs, waves);
+                BuildScene(scene, mats, sprites, vfx, orb, beam, defs, campaign);
 
                 AssetDatabase.SaveAssets();
                 Debug.Log("[SleepDefenders] Jogo construído com sucesso: " + ScenePath +
@@ -882,7 +907,8 @@ namespace SleepDefenders.EditorTools
                 (PrimitiveType.Sphere, new Vector3(-0.25f, 0.65f, -0.12f), Vector3.one * 0.15f, new Color(1f, 0.9f, 0.2f))));
             FinishEnemy(root, visual, false);
             var e = root.AddComponent<ShadowCreeper>();
-            SetFields(e, ("displayName", "Sombra Rastejante"), ("maxHP", 100f), ("moveSpeed", 0.45f), ("attackDamage", 20f), ("attackInterval", 1f));
+            // Velocidades: 1 unidade = 1 célula. A Sombra cruza o tapete (~10,6 unidades) em ~33 s.
+            SetFields(e, ("displayName", "Sombra Rastejante"), ("maxHP", 100f), ("moveSpeed", 0.32f), ("attackDamage", 20f), ("attackInterval", 1f));
             return SavePrefab(root, "Enemy_SombraRastejante").GetComponent<ShadowCreeper>();
         }
 
@@ -894,7 +920,7 @@ namespace SleepDefenders.EditorTools
                 (PrimitiveType.Sphere, new Vector3(-0.38f, 1f, 0), Vector3.one * 0.3f, new Color(1f, 0.9f, 0.2f))));
             FinishEnemy(root, visual, false);
             var e = root.AddComponent<ClosetMonster>();
-            SetFields(e, ("displayName", "Monstro do Armário"), ("maxHP", 450f), ("moveSpeed", 0.28f), ("attackDamage", 35f), ("attackInterval", 1.2f),
+            SetFields(e, ("displayName", "Monstro do Armário"), ("maxHP", 450f), ("moveSpeed", 0.2f), ("attackDamage", 35f), ("attackInterval", 1.2f),
                 ("deathPuffColor", new Color(0.3f, 0.25f, 0.6f, 0.9f)));
             return SavePrefab(root, "Enemy_MonstroDoArmario").GetComponent<ClosetMonster>();
         }
@@ -908,28 +934,118 @@ namespace SleepDefenders.EditorTools
                 (PrimitiveType.Cube, new Vector3(0, 0.45f, -0.4f), new Vector3(0.3f, 0.05f, 0.5f), new Color(0.25f, 0.1f, 0.35f))));
             FinishEnemy(root, visual, true);
             var e = root.AddComponent<WingedNightmare>();
-            SetFields(e, ("displayName", "Pesadelo Alado"), ("maxHP", 70f), ("moveSpeed", 1.1f), ("landedSpeed", 0.55f), ("attackDamage", 15f),
+            SetFields(e, ("displayName", "Pesadelo Alado"), ("maxHP", 70f), ("moveSpeed", 0.8f), ("landedSpeed", 0.4f), ("attackDamage", 15f),
                 ("attackInterval", 0.8f), ("deathPuffColor", new Color(0.55f, 0.2f, 0.6f, 0.9f)));
             return SavePrefab(root, "Enemy_PesadeloAlado").GetComponent<WingedNightmare>();
         }
 
-        private static List<Wave> DefaultWaves(EnemyBase creeper, EnemyBase closet, EnemyBase flyer)
+        // ======================================================================= ÚLTIMA DEFESA
+
+        private static void CreateLaneGuardPrefab()
         {
-            Wave W(string name, float interval, float delay, bool big, params (EnemyBase prefab, int count)[] entries)
+            var root = new GameObject("LaneGuard_RatinhoDeCorda");
+            // Placeholder com a "frente" em -X, como os modelos do Tripo (o yaw vira para +X).
+            Transform visual = BuildVisual(root, "windup_mouse", 0.46f, 0.62f, ToyYaw, () => Placeholder(
+                (PrimitiveType.Sphere, new Vector3(0, 0.18f, 0), new Vector3(0.5f, 0.3f, 0.34f), new Color(0.62f, 0.7f, 0.85f)),
+                (PrimitiveType.Sphere, new Vector3(-0.16f, 0.32f, 0.1f), Vector3.one * 0.13f, new Color(1f, 0.62f, 0.75f)),
+                (PrimitiveType.Sphere, new Vector3(-0.16f, 0.32f, -0.1f), Vector3.one * 0.13f, new Color(1f, 0.62f, 0.75f)),
+                (PrimitiveType.Cylinder, new Vector3(0.08f, 0.38f, 0), new Vector3(0.05f, 0.06f, 0.05f), new Color(1f, 0.8f, 0.25f))));
+            var anim = root.AddComponent<ProceduralAnimator>();
+            anim.Configure(visual, false);
+            root.AddComponent<LaneGuard>();
+            SavePrefab(root, "LaneGuard_RatinhoDeCorda");
+        }
+
+        // ======================================================================= CAMPANHA (5 NOITES)
+
+        /// <summary>
+        /// As 5 noites do jogo, com dificuldade crescente. Cada noite libera um brinquedo ou monstro novo:
+        ///   Noite 1  Abajur + Robô, só Sombras, só nas 3 faixas do meio (aprendizado)
+        ///   Noite 2  + Urso de Pelúcia, chegam os Pesadelos Alados
+        ///   Noite 3  + Carrinho RC, chega o Monstro do Armário
+        ///   Noite 4  todos os brinquedos e monstros, com uma onda grande no meio
+        ///   Noite 5  a noite mais longa, com duas ondas grandes
+        /// </summary>
+        private static Campaign CreateCampaign(List<ToyDefinition> defs, EnemyBase creeper, EnemyBase closet, EnemyBase flyer)
+        {
+            var campaign = AssetDatabase.LoadAssetAtPath<Campaign>(CampaignPath);
+            if (campaign == null)
+            {
+                campaign = ScriptableObject.CreateInstance<Campaign>();
+                AssetDatabase.CreateAsset(campaign, CampaignPath);
+            }
+
+            ToyDefinition lamp = defs[0], robot = defs[1], bear = defs[2], car = defs[3];
+            int[] middle = { 1, 2, 3 };
+
+            Wave W(string name, float interval, float delay, bool big, int[] lanes, params (EnemyBase prefab, int count)[] entries)
             {
                 var w = new Wave { name = name, spawnInterval = interval, delayBeforeWave = delay, isBigWave = big };
+                if (lanes != null) w.lanes.AddRange(lanes);
                 foreach (var e in entries) w.enemies.Add(new EnemySpawnEntry { prefab = e.prefab, count = e.count });
                 return w;
             }
 
-            return new List<Wave>
+            NightDefinition N(string title, string subtitle, string tip, float initialDelay, ToyDefinition[] toys, params Wave[] waves)
             {
-                W("Onda 1", 9f, 0f, false, (creeper, 3)),
-                W("Onda 2", 6.5f, 14f, false, (creeper, 5), (flyer, 1)),
-                W("Onda 3", 5f, 14f, false, (creeper, 6), (flyer, 2), (closet, 1)),
-                W("Onda 4", 4.2f, 14f, false, (creeper, 7), (flyer, 3), (closet, 2)),
-                W("Onda Final", 2.6f, 16f, true, (creeper, 10), (flyer, 4), (closet, 3)),
+                var n = new NightDefinition { title = title, subtitle = subtitle, tip = tip, startingLight = 150, initialDelay = initialDelay, moonlight = true };
+                n.toys.AddRange(toys);
+                n.waves.AddRange(waves);
+                return n;
+            }
+
+            campaign.nights = new List<NightDefinition>
+            {
+                N("Noite 1", "A Primeira Noite",
+                    "Coloque Abajures para juntar Luz e Robôs Laser para proteger as 3 faixas do meio.",
+                    30f, new[] { lamp, robot },
+                    W("Onda 1", 14f, 0f, false, new[] { 2 }, (creeper, 2)),
+                    W("Onda 2", 10f, 18f, false, middle, (creeper, 3)),
+                    W("Onda 3", 7f, 18f, false, middle, (creeper, 5)),
+                    W("Onda Final", 4f, 20f, true, middle, (creeper, 8))),
+
+                N("Noite 2", "Asas no Escuro",
+                    "Pesadelos Alados voam por cima do primeiro brinquedo da faixa. Use Ursos de Pelúcia para segurá-los!",
+                    25f, new[] { lamp, robot, bear },
+                    W("Onda 1", 11f, 0f, false, null, (creeper, 3)),
+                    W("Onda 2", 9f, 18f, false, null, (creeper, 4), (flyer, 1)),
+                    W("Onda 3", 7f, 18f, false, null, (creeper, 6), (flyer, 2)),
+                    W("Onda 4", 6f, 18f, false, null, (creeper, 7), (flyer, 3)),
+                    W("Onda Final", 3.5f, 20f, true, null, (creeper, 10), (flyer, 4))),
+
+                N("Noite 3", "O Armário Rangeu",
+                    "O Monstro do Armário é lento, mas aguenta muito dano. Guarde um Carrinho RC para emergências!",
+                    25f, new[] { lamp, robot, bear, car },
+                    W("Onda 1", 10f, 0f, false, null, (creeper, 4)),
+                    W("Onda 2", 8f, 18f, false, null, (creeper, 5), (flyer, 2)),
+                    W("Onda 3", 7f, 18f, false, null, (creeper, 6), (flyer, 2), (closet, 1)),
+                    W("Onda 4", 6f, 18f, false, null, (creeper, 7), (flyer, 3), (closet, 2)),
+                    W("Onda Final", 3.2f, 20f, true, null, (creeper, 11), (flyer, 4), (closet, 3))),
+
+                N("Noite 4", "Tempestade de Sombras",
+                    "Uma onda enorme chega no meio da noite. Monte uma defesa forte em todas as faixas!",
+                    25f, new[] { lamp, robot, bear, car },
+                    W("Onda 1", 9f, 0f, false, null, (creeper, 5)),
+                    W("Onda 2", 7.5f, 16f, false, null, (creeper, 6), (flyer, 2)),
+                    W("Onda 3", 6.5f, 16f, false, null, (creeper, 7), (flyer, 3), (closet, 1)),
+                    W("Onda Grande", 3.5f, 18f, true, null, (creeper, 8), (flyer, 3), (closet, 2)),
+                    W("Onda 5", 5f, 16f, false, null, (creeper, 9), (flyer, 4), (closet, 2)),
+                    W("Onda Final", 2.8f, 20f, true, null, (creeper, 13), (flyer, 5), (closet, 4))),
+
+                N("Noite 5", "A Noite Mais Longa",
+                    "A última e mais longa noite. Aguente até o amanhecer!",
+                    25f, new[] { lamp, robot, bear, car },
+                    W("Onda 1", 8f, 0f, false, null, (creeper, 6)),
+                    W("Onda 2", 7f, 15f, false, null, (creeper, 7), (flyer, 3)),
+                    W("Onda 3", 6f, 15f, false, null, (creeper, 8), (flyer, 3), (closet, 2)),
+                    W("Onda Grande", 3.2f, 18f, true, null, (creeper, 10), (flyer, 4), (closet, 2)),
+                    W("Onda 5", 5f, 15f, false, null, (creeper, 10), (flyer, 5), (closet, 3)),
+                    W("Onda 6", 4.5f, 15f, false, null, (creeper, 11), (flyer, 5), (closet, 4)),
+                    W("Onda Final", 2.4f, 20f, true, null, (creeper, 16), (flyer, 7), (closet, 5))),
             };
+
+            EditorUtility.SetDirty(campaign);
+            return campaign;
         }
 
         private static ToyDefinition CreateDefinition(string assetName, ToyBase prefab, string iconId, float recharge, bool startsRecharging, string description)
@@ -952,10 +1068,9 @@ namespace SleepDefenders.EditorTools
 
         // ======================================================================= CENA
 
-        private static void BuildScene(Mats mats, Sprites sprites, VfxPrefabs vfx, LightOrb orb, GameObject beam, List<ToyDefinition> defs, List<Wave> waves)
+        private static void BuildScene(Scene scene, Mats mats, Sprites sprites, VfxPrefabs vfx, LightOrb orb, GameObject beam,
+            List<ToyDefinition> defs, Campaign campaign)
         {
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-
             // --- Iluminação de quarto à noite: luar azulado + ambiente suave + luzes quentes dos abajures.
             RenderSettings.skybox = null;
             RenderSettings.ambientMode = AmbientMode.Trilight;
@@ -1047,6 +1162,18 @@ namespace SleepDefenders.EditorTools
             SetFields(grid, ("cellMaterialA", mats.rugA), ("cellMaterialB", mats.rugB), ("highlight", hr), ("raycastCamera", cam));
             grid.BuildGrid();
 
+            // --- Última defesa: um Ratinho de Corda por faixa, na beira do tapete ao lado da cama.
+            GameObject guardAsset = AssetDatabase.LoadAssetAtPath<GameObject>(LaneGuardPrefabPath);
+            var guards = new GameObject("Ratinhos de Corda (ultima defesa)").transform;
+            for (int r = 0; r < grid.Rows; r++)
+            {
+                var g = (GameObject)PrefabUtility.InstantiatePrefab(guardAsset);
+                g.name = $"RatinhoDeCorda_Faixa{r}";
+                g.transform.SetParent(guards, true);
+                g.transform.position = new Vector3(grid.LeftEdgeX - 0.22f, 0f, grid.GetLaneZ(r));
+                SetFields(g.GetComponent<LaneGuard>(), ("lane", r));
+            }
+
             // --- Gerenciadores
             var managers = new GameObject("Managers").transform;
 
@@ -1062,9 +1189,10 @@ namespace SleepDefenders.EditorTools
             spawnerGo.transform.SetParent(managers, false);
             var spawner = spawnerGo.AddComponent<EnemySpawner>();
             var enemiesParent = new GameObject("Monstros").transform;
-            spawner.SetWaves(waves);
-            SetFields(spawner, ("initialDelay", 22f), ("enemiesParent", enemiesParent));
-            SetFields(game, ("spawner", spawner));
+            // As ondas reais vêm da Campanha em tempo de execução; aqui fica a Noite 1 só para referência no Inspector.
+            NightDefinition first = campaign.Get(0);
+            spawner.SetWaves(new List<Wave>(first.waves));
+            SetFields(spawner, ("initialDelay", first.initialDelay), ("enemiesParent", enemiesParent));
 
             var moonlightGo = new GameObject("MoonlightSpawner");
             moonlightGo.transform.SetParent(managers, false);
@@ -1079,8 +1207,10 @@ namespace SleepDefenders.EditorTools
             placementGo.transform.SetParent(managers, false);
             var placement = placementGo.AddComponent<ToyPlacementController>();
 
+            SetFields(game, ("spawner", spawner), ("campaign", campaign), ("currency", currency), ("placement", placement), ("moonlight", moonlight));
+
             // --- UI
-            BuildUI(sprites, defs, currency, placement, grid, cam);
+            BuildUI(sprites, defs, campaign, currency, placement, grid, cam);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -1175,7 +1305,8 @@ namespace SleepDefenders.EditorTools
         private static readonly Color CardColor = new Color(0.98f, 0.93f, 0.82f, 1f);
         private static readonly Color Gold = new Color(1f, 0.83f, 0.3f, 1f);
 
-        private static void BuildUI(Sprites sprites, List<ToyDefinition> defs, CurrencyManager currency, ToyPlacementController placement, GridManager grid, Camera cam)
+        private static void BuildUI(Sprites sprites, List<ToyDefinition> defs, Campaign campaign, CurrencyManager currency, ToyPlacementController placement,
+            GridManager grid, Camera cam)
         {
             var esGo = new GameObject("EventSystem");
             esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
@@ -1254,13 +1385,17 @@ namespace SleepDefenders.EditorTools
 
             // Painel de ondas (canto superior direito)
             RectTransform wavePanel = UIObject("Ondas", hudRoot);
-            Anchor(wavePanel, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -16), new Vector2(380, 96));
+            Anchor(wavePanel, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -16), new Vector2(420, 96));
             Image waveBg = wavePanel.gameObject.AddComponent<Image>();
             waveBg.sprite = sprites.rounded;
             waveBg.type = Image.Type.Sliced;
             waveBg.color = PanelColor;
-            TMP_Text waveLabel = Text("Texto", wavePanel, "Prepare-se...", 32, TextAlignmentOptions.Center, Color.white);
+            TMP_Text waveLabel = Text("Texto", wavePanel, "Noite 1  •  Prepare-se...", 30, TextAlignmentOptions.Center, Color.white);
             Anchor(waveLabel.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(-20, 44));
+            waveLabel.enableAutoSizing = true;
+            waveLabel.fontSizeMin = 18;
+            waveLabel.fontSizeMax = 30;
+            waveLabel.textWrappingMode = TextWrappingModes.NoWrap;
             RectTransform barBack = UIObject("BarraFundo", wavePanel);
             Anchor(barBack, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 16), new Vector2(-40, 22));
             Image backImg = barBack.gameObject.AddComponent<Image>();
@@ -1277,7 +1412,7 @@ namespace SleepDefenders.EditorTools
             fillImg.color = new Color(0.65f, 0.45f, 1f);
 
             // Dica de controles (rodapé)
-            TMP_Text hint = Text("Dica", hudRoot, "1-4: escolher brinquedo   •   R: guardar brinquedo   •   Botão direito/Esc: cancelar", 22, TextAlignmentOptions.Center, new Color(1, 1, 1, 0.75f));
+            TMP_Text hint = Text("Dica", hudRoot, "Números: escolher brinquedo   •   R: guardar brinquedo   •   Botão direito/Esc: cancelar", 22, TextAlignmentOptions.Center, new Color(1, 1, 1, 0.75f));
             Anchor(hint.rectTransform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 12), new Vector2(0, 34));
 
             // Aviso central
@@ -1289,6 +1424,9 @@ namespace SleepDefenders.EditorTools
             bannerGroup.interactable = false;
             TMP_Text bannerText = Text("Texto", banner, "", 60, TextAlignmentOptions.Center, Gold);
             Stretch(bannerText.rectTransform);
+            bannerText.enableAutoSizing = true;
+            bannerText.fontSizeMin = 30;
+            bannerText.fontSizeMax = 60;
 
             // ---------- Menu inicial (arte de título do Nano Banana)
             RectTransform menu = Stretch(UIObject("MenuInicial", canvasRt));
@@ -1304,29 +1442,102 @@ namespace SleepDefenders.EditorTools
             arf.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
             arf.aspectRatio = artImg.sprite != null ? artImg.sprite.rect.width / artImg.sprite.rect.height : 16f / 9f;
             RectTransform shade = UIObject("Sombra", menu);
-            Anchor(shade, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), Vector2.zero, new Vector2(0, 330));
+            Anchor(shade, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), Vector2.zero, new Vector2(0, 470));
             Image shadeImg = shade.gameObject.AddComponent<Image>();
-            shadeImg.color = new Color(0.02f, 0.01f, 0.08f, 0.72f);
+            shadeImg.color = new Color(0.02f, 0.01f, 0.08f, 0.76f);
             shadeImg.raycastTarget = false;
-            TMP_Text howTo = Text("ComoJogar", menu,
-                "Proteja a cama! Use a <color=#FFD54A>Luz</color> para posicionar brinquedos no tapete.\n" +
-                "Abajures geram Luz • Robôs atiram • Ursos seguram • Carrinhos atropelam a faixa inteira.",
-                28, TextAlignmentOptions.Center, Color.white);
-            Anchor(howTo.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 200), new Vector2(1500, 100));
-            Button startButton = BigButton("BotaoComecar", menu, "Começar a Noite", sprites, new Vector2(0, 70));
 
-            // ---------- Derrota e vitória
-            Button retry = ResultPanel("PainelDerrota", canvasRt, sprites, "Os monstros alcançaram a cama!",
-                "Tente outra combinação de brinquedos.", "Tentar de Novo", new Color(0.35f, 0.05f, 0.12f, 0.75f), out GameObject losePanel);
-            Button again = ResultPanel("PainelVitoria", canvasRt, sprites, "Amanheceu! Os brinquedos venceram!",
-                "A criança dormiu tranquila a noite toda.", "Jogar de Novo", new Color(0.95f, 0.7f, 0.3f, 0.35f), out GameObject winPanel);
+            // Cards das noites (Noite 1 ... Noite 5)
+            RectTransform nightRow = UIObject("Noites", menu);
+            Anchor(nightRow, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 300), new Vector2(1400, 124));
+            var rowLayout = nightRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 18;
+            rowLayout.childAlignment = TextAnchor.MiddleCenter;
+            rowLayout.childControlWidth = false;
+            rowLayout.childControlHeight = false;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            var nightButtons = new List<NightButtonUI>();
+            for (int i = 0; i < campaign.Count; i++)
+                nightButtons.Add(BuildNightCard(nightRow, campaign.nights[i], sprites));
+
+            TMP_Text nightDescription = Text("Descricao", menu, "", 27, TextAlignmentOptions.Center, Color.white);
+            Anchor(nightDescription.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 152), new Vector2(1500, 140));
+            nightDescription.enableAutoSizing = true;
+            nightDescription.fontSizeMin = 18;
+            nightDescription.fontSizeMax = 27;
+
+            Button startButton = BigButton("BotaoComecar", menu, "Começar Noite 1", sprites, new Vector2(0, 30));
+            TMP_Text startLabel = startButton.GetComponentInChildren<TMP_Text>();
+
+            // ---------- Derrota e vitória (dois botões cada)
+            ResultPanel("PainelDerrota", canvasRt, sprites, "Os monstros alcançaram a cama!",
+                "Tente outra combinação de brinquedos.", "Tentar de Novo", "Menu", new Color(0.35f, 0.05f, 0.12f, 0.75f),
+                out GameObject losePanel, out Button retry, out Button loseMenu, out _, out _);
+            ResultPanel("PainelVitoria", canvasRt, sprites, "Amanheceu!",
+                "A criança dormiu tranquila a noite toda.", "Próxima Noite", "Menu", new Color(0.95f, 0.7f, 0.3f, 0.35f),
+                out GameObject winPanel, out Button nextNight, out Button winMenu, out TMP_Text winTitle, out TMP_Text winSubtitle);
 
             SetFields(hud, ("menuPanel", menu.gameObject), ("hudRoot", hudRoot.gameObject), ("gameOverPanel", losePanel), ("victoryPanel", winPanel),
-                ("startButton", startButton), ("retryButton", retry), ("playAgainButton", again),
+                ("nightDescription", nightDescription), ("startButton", startButton), ("startButtonLabel", startLabel),
+                ("retryButton", retry), ("loseMenuButton", loseMenu),
+                ("victoryTitle", winTitle), ("victorySubtitle", winSubtitle), ("nextNightButton", nextNight), ("winMenuButton", winMenu),
                 ("waveLabel", waveLabel), ("nightProgressFill", fillImg), ("bannerText", bannerText), ("bannerGroup", bannerGroup));
+            var hudSo = new SerializedObject(hud);
+            SerializedProperty nightsProp = hudSo.FindProperty("nightButtons");
+            nightsProp.arraySize = nightButtons.Count;
+            for (int i = 0; i < nightButtons.Count; i++) nightsProp.GetArrayElementAtIndex(i).objectReferenceValue = nightButtons[i];
+            hudSo.ApplyModifiedPropertiesWithoutUndo();
 
             losePanel.SetActive(false);
             winPanel.SetActive(false);
+        }
+
+        private static NightButtonUI BuildNightCard(RectTransform parent, NightDefinition night, Sprites sprites)
+        {
+            RectTransform rt = UIObject("Card_" + night.title, parent);
+            rt.sizeDelta = new Vector2(250, 124);
+            var group = rt.gameObject.AddComponent<CanvasGroup>();
+            Image bg = rt.gameObject.AddComponent<Image>();
+            bg.sprite = sprites.rounded;
+            bg.type = Image.Type.Sliced;
+            bg.color = new Color(0.2f, 0.14f, 0.4f, 0.95f);
+            Button button = rt.gameObject.AddComponent<Button>();
+            ColorBlock cb = button.colors;
+            cb.highlightedColor = new Color(1.25f, 1.2f, 1.4f);
+            cb.pressedColor = new Color(0.8f, 0.75f, 0.9f);
+            cb.disabledColor = Color.white; // o CanvasGroup já apaga as noites bloqueadas
+            button.colors = cb;
+
+            TMP_Text title = Text("Titulo", rt, night.title, 36, TextAlignmentOptions.Center, Gold);
+            Anchor(title.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -12), new Vector2(-16, 48));
+            TMP_Text subtitle = Text("Subtitulo", rt, night.subtitle, 22, TextAlignmentOptions.Center, Color.white);
+            Anchor(subtitle.rectTransform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 12), new Vector2(-20, 52));
+            subtitle.enableAutoSizing = true;
+            subtitle.fontSizeMin = 14;
+            subtitle.fontSizeMax = 22;
+
+            RectTransform frameRt = Stretch(UIObject("Selecao", rt), -5);
+            Image frame = frameRt.gameObject.AddComponent<Image>();
+            frame.sprite = sprites.roundedOutline;
+            frame.type = Image.Type.Sliced;
+            frame.color = Gold;
+            frame.raycastTarget = false;
+            frame.enabled = false;
+
+            // Selo dourado de "noite concluída"
+            RectTransform badgeRt = UIObject("Concluida", rt);
+            Anchor(badgeRt, new Vector2(1, 1), new Vector2(1, 1), new Vector2(0.5f, 0.5f), new Vector2(-14, -14), new Vector2(28, 28));
+            Image badge = badgeRt.gameObject.AddComponent<Image>();
+            badge.sprite = sprites.circle;
+            badge.color = Gold;
+            badge.raycastTarget = false;
+            badge.enabled = false;
+
+            var ui = rt.gameObject.AddComponent<NightButtonUI>();
+            SetFields(ui, ("button", button), ("group", group), ("titleLabel", title), ("subtitleLabel", subtitle),
+                ("selectionFrame", frame), ("completedBadge", badge));
+            return ui;
         }
 
         private static ToyCardUI BuildCard(RectTransform parent, ToyDefinition def, int hotkey, Sprites sprites)
@@ -1433,7 +1644,9 @@ namespace SleepDefenders.EditorTools
             return tool;
         }
 
-        private static Button ResultPanel(string name, RectTransform parent, Sprites sprites, string title, string subtitle, string buttonText, Color tint, out GameObject panel)
+        private static void ResultPanel(string name, RectTransform parent, Sprites sprites, string title, string subtitle,
+            string primaryText, string secondaryText, Color tint,
+            out GameObject panel, out Button primary, out Button secondary, out TMP_Text titleText, out TMP_Text subtitleText)
         {
             RectTransform root = Stretch(UIObject(name, parent));
             Image dim = root.gameObject.AddComponent<Image>();
@@ -1444,23 +1657,32 @@ namespace SleepDefenders.EditorTools
             boxImg.sprite = sprites.rounded;
             boxImg.type = Image.Type.Sliced;
             boxImg.color = PanelColor;
-            TMP_Text t = Text("Titulo", box, title, 58, TextAlignmentOptions.Center, Gold);
-            Anchor(t.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(-60, 140));
-            TMP_Text s = Text("Subtitulo", box, subtitle, 30, TextAlignmentOptions.Center, Color.white);
-            Anchor(s.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -180), new Vector2(-60, 60));
-            Button b = BigButton("Botao", box, buttonText, sprites, new Vector2(0, 50));
+            titleText = Text("Titulo", box, title, 58, TextAlignmentOptions.Center, Gold);
+            Anchor(titleText.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(-60, 140));
+            titleText.enableAutoSizing = true;
+            titleText.fontSizeMin = 36;
+            titleText.fontSizeMax = 58;
+            subtitleText = Text("Subtitulo", box, subtitle, 30, TextAlignmentOptions.Center, Color.white);
+            Anchor(subtitleText.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -180), new Vector2(-60, 60));
+            subtitleText.enableAutoSizing = true;
+            subtitleText.fontSizeMin = 20;
+            subtitleText.fontSizeMax = 30;
+
+            // Botão principal (dourado) à esquerda e "Menu" (lilás) à direita.
+            primary = BigButton("BotaoPrincipal", box, primaryText, sprites, new Vector2(-170, 50));
+            secondary = BigButton("BotaoMenu", box, secondaryText, sprites, new Vector2(270, 50), 300f, new Color(0.75f, 0.68f, 0.92f, 1f));
             panel = root.gameObject;
-            return b;
         }
 
-        private static Button BigButton(string name, RectTransform parent, string label, Sprites sprites, Vector2 bottomOffset)
+        private static Button BigButton(string name, RectTransform parent, string label, Sprites sprites, Vector2 bottomOffset,
+            float width = 460f, Color? color = null)
         {
             RectTransform rt = UIObject(name, parent);
-            Anchor(rt, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), bottomOffset, new Vector2(460, 110));
+            Anchor(rt, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), bottomOffset, new Vector2(width, 110));
             Image img = rt.gameObject.AddComponent<Image>();
             img.sprite = sprites.rounded;
             img.type = Image.Type.Sliced;
-            img.color = Gold;
+            img.color = color ?? Gold;
             Button b = rt.gameObject.AddComponent<Button>();
             ColorBlock cb = b.colors;
             cb.highlightedColor = new Color(1f, 1f, 0.8f);
@@ -1550,22 +1772,31 @@ namespace SleepDefenders.EditorTools
         }
     }
 
-    /// <summary>Na primeira abertura do projeto (sem a cena do jogo), oferece construir tudo.</summary>
+    /// <summary>
+    /// Na primeira abertura do projeto (sem a cena do jogo) ou depois de uma atualização que precisa
+    /// reconstruir (ex.: campanha de noites ainda não gerada), oferece construir tudo.
+    /// </summary>
     [InitializeOnLoad]
     internal static class SleepDefendersFirstRun
     {
+        private static bool NeedsBuild =>
+            !File.Exists(SleepDefendersBuilder.ScenePath) || !File.Exists(SleepDefendersBuilder.CampaignPath);
+
         static SleepDefendersFirstRun()
         {
-            if (Application.isBatchMode || File.Exists(SleepDefendersBuilder.ScenePath)) return;
-            if (SessionState.GetBool("SleepDefenders.Prompted", false)) return;
-            SessionState.SetBool("SleepDefenders.Prompted", true);
+            if (Application.isBatchMode || !NeedsBuild) return;
+            if (SessionState.GetBool("SleepDefenders.Prompted.v2", false)) return;
+            SessionState.SetBool("SleepDefenders.Prompted.v2", true);
             EditorApplication.delayCall += () =>
             {
-                if (EditorApplication.isPlayingOrWillChangePlaymode || File.Exists(SleepDefendersBuilder.ScenePath)) return;
-                if (EditorUtility.DisplayDialog("Brinquedos vs. Monstros do Escuro",
-                        "Construir agora os prefabs e a cena do jogo?\n(Também disponível no menu Sleep Defenders.)",
-                        "Construir", "Depois"))
-                    SleepDefendersBuilder.BuildFromMenu();
+                if (EditorApplication.isPlayingOrWillChangePlaymode || !NeedsBuild) return;
+                bool update = File.Exists(SleepDefendersBuilder.ScenePath);
+                string message = update
+                    ? "O jogo foi atualizado (5 noites, Ratinho de Corda e novo menu).\nReconstruir agora os prefabs e a cena?"
+                    : "Construir agora os prefabs e a cena do jogo?\n(Também disponível no menu Sleep Defenders.)";
+                if (!EditorUtility.DisplayDialog("Brinquedos vs. Monstros do Escuro", message, "Construir", "Depois")) return;
+                if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+                SleepDefendersBuilder.BuildAll(); // a cena nova já fica aberta
             };
         }
     }

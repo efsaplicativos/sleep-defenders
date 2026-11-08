@@ -53,6 +53,13 @@ namespace SleepDefenders
 
         public bool CanAfford(int cost) => CurrentLight >= cost;
 
+        /// <summary>Define a Luz inicial da noite (chamado pelo GameManager ao preparar a noite).</summary>
+        public void ResetLight(int amount)
+        {
+            CurrentLight = Mathf.Max(0, amount);
+            RefreshUI();
+        }
+
         /// <summary>Adiciona Luz (abajur, luar ou qualquer outra fonte).</summary>
         public void AddLight(int amount)
         {

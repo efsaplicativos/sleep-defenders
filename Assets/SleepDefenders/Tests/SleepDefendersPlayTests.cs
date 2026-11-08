@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 /// <summary>
 /// Testes de gameplay (PlayMode). Rode em Window > General > Test Runner > PlayMode > Run All.
 /// Precisa da cena gerada pelo menu "Sleep Defenders > Construir Jogo".
-/// Os testes guardam e restauram o progresso das noites (PlayerPrefs) de quem estiver jogando.
+/// Os testes guardam e restauram o progresso (noites, estrelas e bolsas) de quem estiver jogando.
 /// </summary>
 public class SleepDefendersPlayTests
 {
@@ -21,24 +21,26 @@ public class SleepDefendersPlayTests
     GridManager grid;
     EnemySpawner spawner;
     ToyPlacementController placement;
-    int savedUnlocked;
+    LevelProgress.Snapshot savedProgress;
 
     [UnitySetUp]
     public IEnumerator Setup()
     {
-        savedUnlocked = LevelProgress.UnlockedCount;
+        savedProgress = LevelProgress.TakeSnapshot();
         yield return LoadGame(LastNight, startPlaying: true);
-        // A Noite 5 é quase toda escura; os testes que não são de luz usam o tapete todo claro.
+        // A Noite 5 é quase toda escura e tem obstáculos; os outros testes usam o tapete todo claro e livre.
         LightField.Instance.Configure(grid.Columns);
+        RugHazards.Instance.Apply(null, null);
     }
 
     [TearDown]
     public void TearDown()
     {
         Time.timeScale = 1f;
-        LevelProgress.SetUnlockedCount(savedUnlocked);
+        LevelProgress.RestoreSnapshot(savedProgress);
         LevelProgress.CurrentNight = -1;
         LevelProgress.AutoStart = false;
+        LevelProgress.OpenLoadout = false;
     }
 
     /// <summary>Carrega a cena na noite indicada. Com startPlaying, começa sem ondas automáticas.</summary>
@@ -285,12 +287,27 @@ public class SleepDefendersPlayTests
             if (i > 0)
                 Assert.Greater(n.EstimatedDuration(), campaign.nights[i - 1].EstimatedDuration(), $"{n.title} longer than previous");
         }
-        // Noite 1 é de aprendizado: só Sombras, 2 brinquedos.
+        // Noite 1 é de aprendizado: só Sombras, 2 brinquedos, sem escolha nem obstáculos.
         Assert.IsTrue(campaign.nights[0].EnemyTypes().All(e => e is ShadowCreeper));
         Assert.AreEqual(2, campaign.nights[0].toys.Count);
-        // Cada noite seguinte traz alguma novidade até a 3ª.
-        Assert.IsNotEmpty(campaign.Novelties(1));
-        Assert.IsNotEmpty(campaign.Novelties(2));
+        Assert.IsFalse(campaign.nights[0].NeedsLoadoutChoice || campaign.nights[1].NeedsLoadoutChoice, "nights 1-2: no loadout choice");
+        Assert.IsEmpty(campaign.nights[0].blockedCells);
+        // Cada noite seguinte traz alguma novidade.
+        for (int i = 1; i < campaign.Count; i++) Assert.IsNotEmpty(campaign.Novelties(i), $"night {i + 1} has news");
+        // Da Noite 3 em diante: há mais brinquedos que espaços na bolsa, e a escolha aperta.
+        Assert.AreEqual(4, campaign.nights[2].ToySlots);
+        Assert.AreEqual(5, campaign.nights[2].toys.Count);
+        Assert.AreEqual(4, campaign.nights[3].ToySlots);
+        Assert.AreEqual(6, campaign.nights[3].toys.Count);
+        Assert.AreEqual(5, campaign.nights[4].ToySlots);
+        Assert.IsTrue(campaign.nights[2].NeedsLoadoutChoice && campaign.nights[3].NeedsLoadoutChoice && campaign.nights[4].NeedsLoadoutChoice);
+        // Obstáculos do tapete e a Sombra do Tapete chegam nas noites finais.
+        Assert.IsNotEmpty(campaign.nights[2].blockedCells, "blocks from night 3");
+        Assert.IsNotEmpty(campaign.nights[3].slipperyLanes, "slippery lane on night 4");
+        Assert.IsNotEmpty(campaign.nights[4].slipperyLanes, "slippery lane on night 5");
+        Assert.IsFalse(campaign.nights[2].EnemyTypes().Any(e => e is RugShadow));
+        Assert.IsTrue(campaign.nights[3].EnemyTypes().Any(e => e is RugShadow), "rug shadow arrives on night 4");
+        Assert.IsTrue(campaign.nights.SelectMany(n => n.EnemyTypes()).All(e => e.Icon != null), "every monster has a preview icon");
         yield return null;
     }
 
@@ -322,6 +339,7 @@ public class SleepDefendersPlayTests
         Assert.AreEqual(GameState.Won, GameManager.Instance.State);
         Assert.IsTrue(LevelProgress.IsUnlocked(1), "night 2 unlocked");
         Assert.IsTrue(LevelProgress.IsCompleted(0));
+        Assert.AreEqual(3, GameManager.Instance.StarsEarned, "nothing went wrong: 3 stars");
 
         GameManager.Instance.NextNight();
         yield return null;
@@ -517,15 +535,18 @@ public class SleepDefendersPlayTests
         NightDefinition night = GameManager.Instance.Night;
         Assert.AreEqual("Noite 5", night.title);
         LightField.Instance.Configure(night.litColumns);
+        RugHazards.Instance.Apply(night.blockedCells, night.slipperyLanes); // blocos e faixa escorregadia de verdade
 
-        // Por faixa: Abajur, Robô, Robô, Abajur, Robô, Robô, Abajur, Urso (abajures nas colunas 0, 3 e 6
-        // iluminam todas as casas dos robôs; o Urso segura o Devorador de Luz na frente).
+        // Por faixa: Robô, Abajur, Robô, Robô, Abajur, Robô, Abajur, Urso. Todo Abajur tem um Robô ATRÁS
+        // (o Pesadelo Alado mergulha nos abajures; num abajur da coluna 0 ninguém consegue mirar nele).
+        // Abajures nas colunas 1, 4 e 6 iluminam as casas dos robôs; o Urso segura o Devorador de Luz
+        // e os sapatos do Armário na frente. As casas com blocos de montar ficam vazias.
         for (int r = 0; r < grid.Rows; r++)
         {
-            int[] lampCols = { 0, 3, 6 }, robotCols = { 1, 2, 4, 5 };
-            foreach (int c in lampCols) Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), r, c, out _));
-            foreach (int c in robotCols) Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<LaserRobot>(), r, c, out _));
-            Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<TeddyBear>(), r, 7, out _));
+            int[] lampCols = { 1, 4, 6 }, robotCols = { 0, 2, 3, 5 };
+            foreach (int c in lampCols) if (!grid.IsBlocked(r, c)) Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), r, c, out _));
+            foreach (int c in robotCols) if (!grid.IsBlocked(r, c)) Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<LaserRobot>(), r, c, out _));
+            if (!grid.IsBlocked(r, 7)) Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<TeddyBear>(), r, 7, out _));
         }
         foreach (LaserRobot robot in Object.FindObjectsByType<LaserRobot>(FindObjectsSortMode.None))
             Assert.IsFalse(robot.InDarkness, $"robot {robot.Lane},{robot.Column} is lit");
@@ -535,5 +556,247 @@ public class SleepDefendersPlayTests
         spawner.Begin();
         yield return WaitUntil(() => GameManager.Instance.State != GameState.Playing, 1200f);
         Assert.AreEqual(GameState.Won, GameManager.Instance.State, "night 5 can be won with a strong defense");
+    }
+
+    // ====================================================================== Pacote 3: contra-ataques dos monstros
+
+    [UnityTest]
+    public IEnumerator ClosetMonster_ThrowsShoes_BearInFrontShieldsRobots()
+    {
+        Time.timeScale = 4f;
+        // Faixa 1: Robô na frente (coluna 5) com um Abajur grudado atrás. Faixa 3: Urso na frente, Robô 2 casas atrás.
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<LaserRobot>(), 1, 5, out ToyBase exposedRobot));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), 1, 4, out ToyBase neighborLamp));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<TeddyBear>(), 3, 7, out ToyBase bear));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<LaserRobot>(), 3, 5, out ToyBase shieldedRobot));
+
+        var exposed = (ClosetMonster)spawner.SpawnEnemy(EnemyPrefab<ClosetMonster>(), 1);
+        var shielded = (ClosetMonster)spawner.SpawnEnemy(EnemyPrefab<ClosetMonster>(), 3);
+        yield return WaitUntil(() => (exposed.ThrowCount >= 2 || Dead(exposed)) && (shielded.ThrowCount >= 2 || Dead(shielded)), 60f);
+        Assert.GreaterOrEqual(exposed.ThrowCount, 2, "closet throws from range");
+        Assert.GreaterOrEqual(shielded.ThrowCount, 2, "closet throws from range");
+        yield return WaitGame(1f); // os sapatos chegam
+
+        Assert.IsFalse(exposed.IsAttacking, "still walking while throwing");
+        Assert.Less(exposedRobot.CurrentHP, exposedRobot.MaxHP, "front robot hit before the closet arrived");
+        Assert.Less(neighborLamp.CurrentHP, neighborLamp.MaxHP, "shoe splashes the toy right behind");
+        Assert.Less(bear.CurrentHP, bear.MaxHP, "the bear takes the shoes");
+        Assert.AreEqual(shieldedRobot.MaxHP, shieldedRobot.CurrentHP, "robot behind the bear (with a gap) is safe");
+    }
+
+    [UnityTest]
+    public IEnumerator Flyer_HuntsLamps_FlyingOverEveryOtherToy()
+    {
+        Time.timeScale = 4f;
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<TeddyBear>(), 2, 6, out ToyBase firstBear));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<TeddyBear>(), 2, 4, out ToyBase secondBear));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), 2, 1, out ToyBase lamp));
+        var flyer = (WingedNightmare)spawner.SpawnEnemy(EnemyPrefab<WingedNightmare>(), 2);
+        Assert.IsTrue(flyer.IsHuntingLamp, "sees the lamp down the lane");
+
+        yield return WaitUntil(() => flyer.IsAttacking || Dead(flyer), 40f);
+        Assert.AreEqual(lamp, flyer.CurrentTarget, "dives at the lamp");
+        Assert.IsFalse(flyer.IsAirborne, "lands to attack");
+        Assert.AreEqual(firstBear.MaxHP, firstBear.CurrentHP, "flew over the first bear");
+        Assert.AreEqual(secondBear.MaxHP, secondBear.CurrentHP, "flew over the second bear too");
+    }
+
+    [UnityTest]
+    public IEnumerator RugShadow_EmergesMidBoard_BehindTheFrontLine()
+    {
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<TeddyBear>(), 2, 8, out ToyBase frontBear));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<LaserRobot>(), 2, 0, out _));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<TeddyBear>(), 2, 4, out _)); // casa ocupada: a sombra prefere as vazias
+
+        var shadow = (RugShadow)spawner.SpawnEnemy(EnemyPrefab<RugShadow>(), 2);
+        Assert.IsTrue(shadow.IsEmerging, "starts coming out of the rug");
+        Assert.IsTrue(shadow.EmergeColumn == 3 || shadow.EmergeColumn == 5, $"emerges mid-board on a free cell (got {shadow.EmergeColumn})");
+        yield return null;
+        Assert.AreEqual(shadow.EmergeColumn, grid.ColumnAt(shadow.transform.position.x), "placed on that column");
+        float x = shadow.transform.position.x;
+        yield return WaitGame(0.4f);
+        Assert.AreEqual(x, shadow.transform.position.x, 0.01f, "does not walk while emerging");
+
+        Time.timeScale = 5f;
+        yield return WaitUntil(() => !shadow.IsEmerging, 5f);
+        yield return WaitGame(1f);
+        Assert.Less(shadow.transform.position.x, x, "walks toward the bed after emerging");
+        Assert.AreEqual(frontBear.MaxHP, frontBear.CurrentHP, "front line never touched");
+    }
+
+    // ====================================================================== Pacote 4: brinquedos novos e tapete
+
+    [UnityTest]
+    public IEnumerator MusicBox_SlowsNearbyMonsters_AndHealsBears()
+    {
+        Time.timeScale = 5f;
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<MusicBox>(), 2, 4, out ToyBase boxToy));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<TeddyBear>(), 1, 3, out ToyBase bear));
+        var box = (MusicBox)boxToy;
+
+        bear.TakeDamage(200f);
+        float hurt = bear.CurrentHP;
+        yield return WaitGame(2f);
+        Assert.Greater(bear.CurrentHP, hurt + 5f, "bear next to the music box heals");
+
+        EnemyBase near = spawner.SpawnEnemy(EnemyPrefab<ShadowCreeper>(), 3); // faixa vizinha da caixinha
+        EnemyBase far = spawner.SpawnEnemy(EnemyPrefab<ShadowCreeper>(), 0);
+        Assert.AreEqual(1f, MusicBox.SlowFactorFor(near), 0.001f, "still far away");
+        yield return WaitUntil(() => Mathf.Abs(near.transform.position.x - box.transform.position.x) < 1f, 40f);
+        Assert.AreEqual(box.SlowFactor, near.EffectiveSpeed / far.EffectiveSpeed, 0.01f, "half speed near the music box");
+        Assert.AreEqual(box.SlowFactor, near.AttackRateFactor, 0.001f, "attacks slower too");
+        Assert.AreEqual(1f, far.AttackRateFactor, 0.001f);
+    }
+
+    [UnityTest]
+    public IEnumerator Flashlight_HitsEveryMonsterInCone_AndShinesInBlackout()
+    {
+        LightField light = LightField.Instance;
+        light.Configure(0); // tapete todo escuro
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyFlashlight>(), 2, 3, out ToyBase flashToy));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), 0, 0, out _));
+        var flashlight = (ToyFlashlight)flashToy;
+
+        // Cone: própria faixa colunas 3-5, faixas vizinhas colunas 4-5.
+        Assert.IsTrue(light.IsLampLit(2, 3) && light.IsLampLit(2, 5) && light.IsLampLit(1, 4) && light.IsLampLit(3, 5));
+        Assert.IsFalse(light.IsLampLit(2, 6) || light.IsLampLit(1, 3) || light.IsLampLit(0, 4), "short cone");
+        Assert.IsTrue(light.IsLampLit(0, 1), "lamp light");
+
+        light.TriggerBlackout(30f);
+        Assert.IsTrue(light.IsLampLit(2, 4), "flashlight keeps shining in a blackout");
+        Assert.IsFalse(light.IsLampLit(0, 1), "lamps go dark");
+
+        Time.timeScale = 4f;
+        EnemyBase[] creepers =
+        {
+            spawner.SpawnEnemy(EnemyPrefab<ShadowCreeper>(), 1),
+            spawner.SpawnEnemy(EnemyPrefab<ShadowCreeper>(), 2),
+            spawner.SpawnEnemy(EnemyPrefab<ShadowCreeper>(), 3),
+        };
+        yield return WaitUntil(() => flashlight.FlashCount >= 1, 60f);
+        Assert.GreaterOrEqual(flashlight.FlashCount, 1, "flashes when monsters enter the cone");
+        foreach (EnemyBase e in creepers)
+            Assert.IsTrue(Dead(e) || e.CurrentHP < e.MaxHP, $"monster in lane {e.Lane} was hit by the same flash");
+    }
+
+    [UnityTest]
+    public IEnumerator RugObstacles_BlockCells_AndSlipperyLaneIsFaster()
+    {
+        RugHazards hazards = RugHazards.Instance;
+        hazards.Apply(new[] { new Vector2Int(1, 4) }, new[] { 3 });
+        Assert.IsTrue(grid.IsBlocked(1, 4));
+        Assert.IsFalse(grid.CanPlace(grid.GetCell(1, 4)), "can't place on toy blocks");
+        Assert.IsFalse(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), 1, 4, out _));
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), 1, 5, out _), "neighbor cell is free");
+
+        EnemyBase slippery = spawner.SpawnEnemy(EnemyPrefab<ShadowCreeper>(), 3);
+        EnemyBase normal = spawner.SpawnEnemy(EnemyPrefab<ShadowCreeper>(), 0);
+        var flyerSlippery = (WingedNightmare)spawner.SpawnEnemy(EnemyPrefab<WingedNightmare>(), 3);
+        var flyerNormal = (WingedNightmare)spawner.SpawnEnemy(EnemyPrefab<WingedNightmare>(), 4);
+        yield return null;
+        Assert.AreEqual(hazards.SlipperySpeedMultiplier, slippery.EffectiveSpeed / normal.EffectiveSpeed, 0.01f, "monsters slide faster");
+        Assert.IsTrue(flyerSlippery.IsAirborne);
+        Assert.AreEqual(flyerNormal.EffectiveSpeed, flyerSlippery.EffectiveSpeed, 0.001f, "flying monsters don't slip");
+
+        hazards.Apply(null, null);
+        Assert.IsFalse(grid.IsBlocked(1, 4), "obstacles cleared for the next night");
+        Assert.AreEqual(1f, slippery.EffectiveSpeed / normal.EffectiveSpeed, 0.01f);
+    }
+
+    [UnityTest]
+    public IEnumerator Loadout_LimitsToySlots_RemembersChoice_AndOpensBeforeTheNight()
+    {
+        LevelProgress.SetUnlockedCount(5);
+        LevelProgress.SaveLoadout(3, null); // começa sem bolsa salva (o save do jogador volta no TearDown)
+        yield return LoadGame(3, startPlaying: false); // Noite 4: 4 de 6 brinquedos
+        GameManager game = GameManager.Instance;
+        NightDefinition night = game.Night;
+        Assert.IsTrue(game.NeedsLoadoutChoice);
+        Assert.AreEqual(4, game.Loadout.Count, "default bag is full");
+        Assert.IsTrue(game.Loadout.Any(t => t.prefab is ToyFlashlight), "the new toy comes in the default bag");
+
+        var hud = Object.FindAnyObjectByType<HUDController>();
+        hud.OnStartPressed();
+        LoadoutPanelUI panel = hud.LoadoutPanel;
+        Assert.IsTrue(panel.IsOpen, "start opens the prep screen");
+        Assert.AreEqual(GameState.Menu, game.State, "night not started yet");
+        Assert.IsTrue(panel.PreviewedMonsters.Any(e => e is LightEater) && panel.PreviewedMonsters.Any(e => e is RugShadow), "monster preview");
+        Assert.IsFalse(panel.PreviewedMonsters.Any(e => e == null));
+
+        // Monta a bolsa: Abajur, Urso, Caixinha e Lanterna (sem Robô e sem Carrinho).
+        var wanted = night.toys.Where(t => t.prefab is ToyLamp || t.prefab is TeddyBear || t.prefab is MusicBox || t.prefab is ToyFlashlight).ToList();
+        Assert.AreEqual(4, wanted.Count);
+        foreach (ToyDefinition t in night.toys.Where(t => panel.Selection.Contains(t) && !wanted.Contains(t)).ToList()) Assert.IsTrue(panel.Toggle(t));
+        ToyDefinition extra = night.toys.First(t => !wanted.Contains(t));
+        foreach (ToyDefinition t in wanted.Where(t => !panel.Selection.Contains(t)).ToList()) Assert.IsTrue(panel.Toggle(t));
+        Assert.IsFalse(panel.Toggle(extra), "the bag is full");
+        Assert.AreEqual(4, panel.Selection.Count);
+
+        Assert.IsTrue(panel.Confirm());
+        Assert.AreEqual(GameState.Playing, game.State);
+        Assert.IsFalse(panel.IsOpen);
+        CollectionAssert.AreEquivalent(wanted, placement.ActiveCards.Select(c => c.Definition), "only the chosen cards");
+        CollectionAssert.AreEquivalent(wanted.Select(t => night.toys.IndexOf(t)), LevelProgress.GetLoadout(3), "choice saved");
+
+        // "Tentar de Novo" lembra a bolsa.
+        game.Restart();
+        yield return null;
+        yield return null;
+        yield return null;
+        placement = Object.FindAnyObjectByType<ToyPlacementController>();
+        Assert.AreEqual(GameState.Playing, GameManager.Instance.State);
+        CollectionAssert.AreEquivalent(wanted, placement.ActiveCards.Select(c => c.Definition), "same bag after retry");
+
+        // "Próxima Noite" numa noite com escolha abre a tela de preparo.
+        yield return LoadGame(2, startPlaying: true);
+        GameManager.Instance.Win();
+        GameManager.Instance.NextNight();
+        yield return null;
+        yield return null;
+        yield return null;
+        Assert.AreEqual(3, GameManager.Instance.NightIndex);
+        Assert.AreEqual(GameState.Menu, GameManager.Instance.State, "waits for the bag");
+        Assert.IsTrue(Object.FindAnyObjectByType<HUDController>().LoadoutPanel.IsOpen, "prep screen opens by itself");
+    }
+
+    // ====================================================================== Pacote 5: estrelas
+
+    [UnityTest]
+    public IEnumerator Stars_LoseOneForBrokenLamp_AndOneForBedZone_KeepBest()
+    {
+        LevelProgress.ResetProgress();
+        LevelProgress.SetUnlockedCount(5);
+        GameManager game = GameManager.Instance;
+        Assert.AreEqual(3, game.CountStars(), "perfect so far");
+
+        // Guardar um Abajur não conta; quebrar conta.
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), 0, 8, out ToyBase saved));
+        saved.Remove();
+        Assert.IsFalse(game.LampLost, "removing a lamp is fine");
+        Assert.IsTrue(grid.TryPlaceToy(ToyPrefab<ToyLamp>(), 0, 7, out ToyBase broken));
+        broken.TakeDamage(9999f);
+        Assert.IsTrue(game.LampLost, "a broken lamp costs a star");
+        Assert.AreEqual(2, game.CountStars());
+
+        Time.timeScale = 8f;
+        EnemyBase runner = spawner.SpawnEnemy(EnemyPrefab<WingedNightmare>(), 4);
+        yield return WaitUntil(() => game.BedZoneBreached, 60f);
+        Assert.IsTrue(game.BedZoneBreached, "a monster near the bed costs a star");
+        Assert.LessOrEqual(grid.ColumnAt(runner.transform.position.x), 1);
+        runner.Kill();
+        Assert.AreEqual(GameState.Playing, game.State);
+
+        game.Win();
+        Assert.AreEqual(1, game.StarsEarned);
+        Assert.AreEqual(1, LevelProgress.GetStars(LastNight));
+        Assert.IsTrue(LevelProgress.RecordStars(LastNight, 3), "better result is a record");
+        Assert.IsFalse(LevelProgress.RecordStars(LastNight, 2), "worse result keeps the best");
+        Assert.AreEqual(3, LevelProgress.GetStars(LastNight));
+
+        yield return LoadGame(0, startPlaying: false);
+        NightButtonUI[] cards = Object.FindObjectsByType<NightButtonUI>(FindObjectsSortMode.None)
+            .OrderBy(b => b.transform.GetSiblingIndex()).ToArray();
+        Assert.AreEqual(3, cards[LastNight].ShownStars, "menu card shows the best stars");
+        Assert.AreEqual(0, cards[0].ShownStars);
     }
 }

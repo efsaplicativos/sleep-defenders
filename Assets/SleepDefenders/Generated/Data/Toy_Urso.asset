@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: SleepDefenders::SleepDefenders.ToyDefinition
   prefab: {fileID: 2601776292744143253, guid: 7d4d3446901b3d14696a5ab43e8c3896, type: 3}
   icon: {fileID: 21300000, guid: 106daa74afba96649b79ba068dd3bc4d, type: 3}
-  description: "Muita vida. Segura os monstros (at\xE9 o Devorador de Luz)."
+  description: "Muita vida. Segura os monstros (at\xE9 o Devorador de Luz) e aguenta
+    os sapatos do Arm\xE1rio na frente dos Rob\xF4s."
   rechargeTime: 25
   startsRecharging: 0
   extraCostPerCopy: 0

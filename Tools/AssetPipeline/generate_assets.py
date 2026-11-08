@@ -81,6 +81,16 @@ ASSETS = [
     ("rc_car", "toy",
      "A cute chunky toy remote-control monster truck, bright orange and blue plastic body, oversized knobby black "
      "rubber wheels, small antenna with a little flag, yellow lightning bolt decal on the side.", 25000),
+    # Suporte: deixa os monstros proximos lentos (e cura ursos vizinhos).
+    ("music_box", "toy",
+     "A cute toy music box: small rounded wooden box painted pastel pink and mint green with gold trim, open lid "
+     "with a tiny teddy bear ballerina figurine standing on top, a golden wind-up crank on the side, little "
+     "musical notes painted on the front, chunky toy proportions.", 25000),
+    # Atacante de area curta: cone de luz que queima varias sombras e ilumina as casas a frente.
+    ("flashlight", "toy",
+     "A chunky cute toy flashlight lying horizontally on a small round stand, bright yellow plastic body with a "
+     "blue rubber grip, a big round glass lens at the front glowing warm white, a red push button on top, two "
+     "small happy eyes on the side of the body, the lens pointing forward toward the viewer.", 25000),
     # Ultima defesa de cada faixa (fica na beira da cama e varre a faixa uma vez).
     ("windup_mouse", "toy",
      "A cute vintage wind-up toy mouse, shiny silver-blue tin body, round pink ears, big friendly eyes, pink nose, "
@@ -100,6 +110,12 @@ ASSETS = [
      MONSTER_STYLE +
      "A small flying nightmare imp: round dark purple body, large spread bat-like leathery wings, glowing magenta "
      "eyes, two tiny fangs, curled pointy tail, little claws, hovering pose with wings spread wide.", 30000),
+    # Sombra do Tapete: surge de baixo do tapete, no meio do tabuleiro.
+    ("rug_shadow", "monster",
+     MONSTER_STYLE +
+     "A mischievous flat shadow creature that looks like a rumpled dark purple blanket with a small pointed hood, "
+     "two big glowing lime-green eyes peeking out, small three-finger grabbing hands poking out from under the "
+     "fabric edges, wavy fringe at the bottom, crawling low to the ground.", 30000),
     # Devorador de Luz: se esgueira entre os brinquedos e come os abajures.
     ("light_eater", "monster",
      MONSTER_STYLE +

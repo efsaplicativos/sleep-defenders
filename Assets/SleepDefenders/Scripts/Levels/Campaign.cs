@@ -32,9 +32,25 @@ namespace SleepDefenders
         [Tooltip("Regras novas desta noite, mostradas em \"Novidades\" no menu (ex.: \"Apagão\").")]
         public List<string> newRules = new List<string>();
 
-        [Tooltip("Cards disponíveis nesta noite (vazio = todos).")]
+        [Header("Tapete")]
+        [Tooltip("Casas com blocos de montar (x = faixa, y = coluna): não dá para pôr brinquedos nelas.")]
+        public List<Vector2Int> blockedCells = new List<Vector2Int>();
+        [Tooltip("Faixas escorregadias: os monstros que andam no chão correm mais nelas.")]
+        public List<int> slipperyLanes = new List<int>();
+
+        [Header("Brinquedos")]
+        [Tooltip("Brinquedos liberados nesta noite (vazio = todos). A ordem é a dos cards.")]
         public List<ToyDefinition> toys = new List<ToyDefinition>();
+        [Tooltip("Quantos brinquedos o jogador leva na bolsa (0 = todos os liberados). " +
+                 "Se for menor que a lista, a noite começa pela tela de preparo.")]
+        [Min(0)] public int toySlots = 0;
         public List<Wave> waves = new List<Wave>();
+
+        /// <summary>Espaços na bolsa de brinquedos desta noite.</summary>
+        public int ToySlots => toySlots <= 0 ? toys.Count : Mathf.Min(toySlots, toys.Count);
+
+        /// <summary>O jogador precisa escolher quais brinquedos levar (há mais brinquedos que espaços)?</summary>
+        public bool NeedsLoadoutChoice => toys.Count > ToySlots;
 
         /// <summary>Monstros que aparecem nas ondas desta noite (sem repetição).</summary>
         public HashSet<EnemyBase> EnemyTypes()

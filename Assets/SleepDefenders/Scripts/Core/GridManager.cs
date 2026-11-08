@@ -15,7 +15,8 @@ namespace SleepDefenders
     /// Responsabilidades:
     ///   1. Criar as células (BoxColliders na layer "Grid") — em edit mode pelo construtor ou no Awake.
     ///   2. Converter a posição do mouse/toque em célula usando Physics.Raycast.
-    ///   3. Controlar a ocupação: no máximo 1 brinquedo por célula.
+    ///   3. Controlar a ocupação: no máximo 1 brinquedo por célula, e nenhum nas casas bloqueadas
+    ///      por obstáculos da noite (ver RugHazards).
     ///   4. Mostrar o destaque (verde/vermelho) da célula sob o cursor.
     /// </summary>
     public class GridManager : MonoBehaviour
@@ -55,6 +56,7 @@ namespace SleepDefenders
 
         private GridCell[,] cellLookup;
         private ToyBase[,] occupants;
+        private bool[,] blocked;
         private MaterialPropertyBlock highlightBlock;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -223,7 +225,22 @@ namespace SleepDefenders
 
         public ToyBase GetOccupant(int row, int column) => IsInside(row, column) ? occupants[row, column] : null;
 
-        public bool CanPlace(GridCell cell) => cell != null && !IsOccupied(cell.Row, cell.Column);
+        public bool CanPlace(GridCell cell) => cell != null && !IsOccupied(cell.Row, cell.Column) && !IsBlocked(cell.Row, cell.Column);
+
+        /// <summary>Casa ocupada por um obstáculo do tapete (blocos de montar): não aceita brinquedos.</summary>
+        public bool IsBlocked(int row, int column) => blocked != null && IsInside(row, column) && blocked[row, column];
+
+        /// <summary>
+        /// Define as casas bloqueadas da noite (x = faixa/linha, y = coluna). null ou vazio = nenhuma.
+        /// Brinquedos que já estiverem nelas não são afetados (só vale para os próximos).
+        /// </summary>
+        public void SetBlockedCells(IEnumerable<Vector2Int> cells)
+        {
+            blocked = new bool[rows, columns];
+            if (cells == null) return;
+            foreach (Vector2Int cell in cells)
+                if (IsInside(cell.x, cell.y)) blocked[cell.x, cell.y] = true;
+        }
 
         /// <summary>
         /// Instancia o brinquedo no centro da célula e marca a célula como ocupada.
@@ -232,7 +249,7 @@ namespace SleepDefenders
         public bool TryPlaceToy(ToyBase prefab, int row, int column, out ToyBase instance)
         {
             instance = null;
-            if (prefab == null || !IsInside(row, column) || IsOccupied(row, column)) return false;
+            if (prefab == null || !IsInside(row, column) || IsOccupied(row, column) || IsBlocked(row, column)) return false;
 
             // Brinquedos olham para +X (de onde os monstros vêm).
             instance = Instantiate(prefab, GetCellCenter(row, column), Quaternion.identity);

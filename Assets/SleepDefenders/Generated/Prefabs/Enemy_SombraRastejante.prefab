@@ -170,6 +170,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SleepDefenders::SleepDefenders.ShadowCreeper
   displayName: Sombra Rastejante
+  icon: {fileID: 21300000, guid: fc56173d2c059e549b09fab4a45a5725, type: 3}
+  hint: "Lenta e teimosa. Um Rob\xF4 na faixa d\xE1 conta."
   maxHP: 100
   moveSpeed: 0.32
   attackDamage: 20

@@ -23,9 +23,12 @@ MonoBehaviour:
     litColumns: 9
     laneGuards: 1
     newRules: []
+    blockedCells: []
+    slipperyLanes: 
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
+    toySlots: 2
     waves:
     - name: Onda 1
       enemies:
@@ -73,8 +76,8 @@ MonoBehaviour:
       blackout: 0
   - title: Noite 2
     subtitle: Asas no Escuro
-    tip: "Pesadelos Alados voam por cima do primeiro brinquedo da faixa, e os monstros
-      come\xE7am a vir em dupla. Um Rob\xF4 sozinho n\xE3o basta!"
+    tip: "Pesadelos Alados voam por cima dos brinquedos e mergulham nos Abajures!
+      Os monstros come\xE7am a vir em dupla."
     startingLight: 150
     initialDelay: 25
     moonlight: 1
@@ -82,10 +85,13 @@ MonoBehaviour:
     laneGuards: 1
     newRules:
     - Monstros em dupla
+    blockedCells: []
+    slipperyLanes: 
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
     - {fileID: 11400000, guid: 970cfdcc3a6ad604f8a1167a1ace0e86, type: 2}
+    toySlots: 3
     waves:
     - name: Onda 1
       enemies:
@@ -152,21 +158,30 @@ MonoBehaviour:
       blackout: 0
   - title: Noite 3
     subtitle: "O Arm\xE1rio Rangeu"
-    tip: "O fundo do tapete est\xE1 escuro: l\xE1 os Rob\xF4s atiram na metade da
-      velocidade. Ilumine a frente com Abajures!"
+    tip: "Escolha 4 brinquedos para a bolsa! O Monstro do Arm\xE1rio joga sapatos
+      de longe: um Urso na frente protege os Rob\xF4s. O fundo do tapete est\xE1
+      escuro e h\xE1 blocos de montar no caminho."
     startingLight: 150
     initialDelay: 25
     moonlight: 1
     litColumns: 5
     laneGuards: 1
     newRules:
+    - Tela de preparo (bolsa)
     - "Escurid\xE3o no fundo do tapete"
+    - Blocos de montar
     - 2 faixas ao mesmo tempo
+    blockedCells:
+    - {x: 1, y: 3}
+    - {x: 3, y: 5}
+    slipperyLanes: 
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
     - {fileID: 11400000, guid: 970cfdcc3a6ad604f8a1167a1ace0e86, type: 2}
     - {fileID: 11400000, guid: 342e9ccd9a4e4b948b4149b49c39904d, type: 2}
+    - {fileID: 11400000, guid: d43b2b1cfb27ba84ca86399f0f5e51d0, type: 2}
+    toySlots: 4
     waves:
     - name: Onda 1
       enemies:
@@ -239,8 +254,9 @@ MonoBehaviour:
       blackout: 0
   - title: Noite 4
     subtitle: Tempestade de Sombras
-    tip: "Sem Ratinhos de Corda! O Devorador de Luz passa pelos brinquedos e come
-      Abajures: s\xF3 o Urso o segura. Cuidado com o apag\xE3o!"
+    tip: "Sem Ratinhos de Corda! A Sombra do Tapete sai do meio do tapete e o Devorador
+      de Luz come Abajures. A faixa do meio \xE9 escorregadia. A Lanterna continua
+      acesa no apag\xE3o!"
     startingLight: 200
     initialDelay: 30
     moonlight: 1
@@ -249,11 +265,19 @@ MonoBehaviour:
     newRules:
     - "Apag\xE3o"
     - Sem Ratinhos de Corda
+    - Faixa escorregadia
+    blockedCells:
+    - {x: 0, y: 5}
+    - {x: 4, y: 3}
+    slipperyLanes: 02000000
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
     - {fileID: 11400000, guid: 970cfdcc3a6ad604f8a1167a1ace0e86, type: 2}
     - {fileID: 11400000, guid: 342e9ccd9a4e4b948b4149b49c39904d, type: 2}
+    - {fileID: 11400000, guid: d43b2b1cfb27ba84ca86399f0f5e51d0, type: 2}
+    - {fileID: 11400000, guid: dd4c0a728eb448b4ab6c7be619670d72, type: 2}
+    toySlots: 4
     waves:
     - name: Onda 1
       enemies:
@@ -282,7 +306,9 @@ MonoBehaviour:
     - name: Onda 3
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 6
+        count: 5
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 1
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 2
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
@@ -299,7 +325,9 @@ MonoBehaviour:
     - name: Onda Grande
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 8
+        count: 6
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 2
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 3
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
@@ -316,7 +344,9 @@ MonoBehaviour:
     - name: Onda 5
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 9
+        count: 7
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 2
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 3
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
@@ -333,7 +363,9 @@ MonoBehaviour:
     - name: Onda Final
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 13
+        count: 10
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 3
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 5
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
@@ -349,8 +381,9 @@ MonoBehaviour:
       blackout: 0
   - title: Noite 5
     subtitle: A Noite Mais Longa
-    tip: "S\xF3 a beira da cama tem luz e as luzes v\xE3o se apagar duas vezes. Ilumine
-      as faixas e proteja seus Abajures at\xE9 o amanhecer!"
+    tip: "S\xF3 a beira da cama tem luz, as luzes v\xE3o se apagar duas vezes e as
+      sombras saem do tapete. Escolha bem os 5 brinquedos da bolsa e proteja seus
+      Abajures at\xE9 o amanhecer!"
     startingLight: 200
     initialDelay: 30
     moonlight: 1
@@ -360,11 +393,19 @@ MonoBehaviour:
     - "Dois apag\xF5es"
     - "S\xF3 a beira da cama iluminada"
     - Grupos de 3
+    blockedCells:
+    - {x: 0, y: 3}
+    - {x: 2, y: 6}
+    - {x: 4, y: 4}
+    slipperyLanes: 01000000
     toys:
     - {fileID: 11400000, guid: 4596c74c8a025064fa0f7b239020854b, type: 2}
     - {fileID: 11400000, guid: b0892754d8c4f7c4aad70752430b0cb5, type: 2}
     - {fileID: 11400000, guid: 970cfdcc3a6ad604f8a1167a1ace0e86, type: 2}
     - {fileID: 11400000, guid: 342e9ccd9a4e4b948b4149b49c39904d, type: 2}
+    - {fileID: 11400000, guid: d43b2b1cfb27ba84ca86399f0f5e51d0, type: 2}
+    - {fileID: 11400000, guid: dd4c0a728eb448b4ab6c7be619670d72, type: 2}
+    toySlots: 5
     waves:
     - name: Onda 1
       enemies:
@@ -393,7 +434,9 @@ MonoBehaviour:
     - name: Onda 3
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 8
+        count: 6
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 2
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 3
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
@@ -410,7 +453,9 @@ MonoBehaviour:
     - name: Onda Grande
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 10
+        count: 8
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 2
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 4
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
@@ -427,7 +472,9 @@ MonoBehaviour:
     - name: Onda 5
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 10
+        count: 7
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 3
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 4
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
@@ -444,7 +491,9 @@ MonoBehaviour:
     - name: Onda 6
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 11
+        count: 8
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 3
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 5
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}
@@ -461,7 +510,9 @@ MonoBehaviour:
     - name: Onda Final
       enemies:
       - prefab: {fileID: 2023112523072173341, guid: 498eaa33090136043a953891b03802e1, type: 3}
-        count: 16
+        count: 12
+      - prefab: {fileID: 1194510970367550268, guid: 3c51ca49b2bbdde42854a97bcb33609e, type: 3}
+        count: 4
       - prefab: {fileID: 6688555536981397180, guid: 05ce4b5328aaa3b4899fcbfce817e9fd, type: 3}
         count: 6
       - prefab: {fileID: 7559864267972802153, guid: afa46c4f75cbeee43a1c962d8a765d34, type: 3}

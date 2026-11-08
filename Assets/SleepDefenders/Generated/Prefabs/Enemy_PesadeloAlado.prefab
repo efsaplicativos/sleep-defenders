@@ -170,6 +170,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SleepDefenders::SleepDefenders.WingedNightmare
   displayName: Pesadelo Alado
+  icon: {fileID: 21300000, guid: 3d6b1cc738c5cde4f96d368c682c5ec6, type: 3}
+  hint: "Mergulha nos Abajures! Deixe um Rob\xF4 atr\xE1s de cada Abajur."
   maxHP: 70
   moveSpeed: 0.8
   attackDamage: 15

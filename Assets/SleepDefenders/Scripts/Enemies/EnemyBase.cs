@@ -23,6 +23,10 @@ namespace SleepDefenders
     {
         [Header("Monstro")]
         [SerializeField] private string displayName = "Monstro";
+        [Tooltip("Ícone mostrado na tela de preparo da noite.")]
+        [SerializeField] private Sprite icon;
+        [Tooltip("Dica curta mostrada na tela de preparo (como lidar com este monstro).")]
+        [SerializeField] private string hint = "";
         [SerializeField, Min(1f)] private float maxHP = 100f;
         [Tooltip("Unidades por segundo (1 unidade = 1 célula).")]
         [SerializeField, Min(0f)] protected float moveSpeed = 0.45f;
@@ -50,6 +54,8 @@ namespace SleepDefenders
         private bool dead;
 
         public string DisplayName => displayName;
+        public Sprite Icon => icon;
+        public string Hint => hint;
         public int Lane { get; private set; } = -1;
         public float MaxHP => maxHP;
         public float CurrentHP { get; private set; }
@@ -97,7 +103,10 @@ namespace SleepDefenders
         /// <summary>Sombras andam mais devagar na luz de um abajur (ver LightField). O Devorador de Luz não.</summary>
         protected virtual bool SlowedByLight => true;
 
-        /// <summary>Velocidade de agora, já com o efeito da luz.</summary>
+        /// <summary>
+        /// Velocidade de agora: luz do abajur (mais lento), Caixinha de Música (mais lento)
+        /// e faixa escorregadia do tapete (mais rápido, só para quem anda no chão).
+        /// </summary>
         public float EffectiveSpeed
         {
             get
@@ -105,9 +114,14 @@ namespace SleepDefenders
                 float speed = CurrentSpeed;
                 LightField light = LightField.Instance;
                 if (SlowedByLight && light != null) speed *= light.EnemySpeedFactorAt(Lane, transform.position);
+                speed *= MusicBox.SlowFactorFor(this);
+                if (!IsAirborne && RugHazards.Instance != null) speed *= RugHazards.Instance.SpeedFactor(Lane);
                 return speed;
             }
         }
+
+        /// <summary>Ritmo dos ataques (1 = normal). Perto de uma Caixinha de Música os monstros atacam mais devagar.</summary>
+        public float AttackRateFactor => MusicBox.SlowFactorFor(this);
 
         /// <summary>
         /// Faixa preferida deste tipo de monstro entre as opções da onda (-1 = sem preferência, sorteia).
@@ -148,9 +162,11 @@ namespace SleepDefenders
 
         private void Update()
         {
-            if (!IsAlive || CurrentTarget == null || !GameManager.IsPlaying) return;
+            if (!IsAlive || !GameManager.IsPlaying) return;
+            OnTick(Time.deltaTime);
+            if (!IsAlive || CurrentTarget == null) return;
 
-            attackTimer -= Time.deltaTime;
+            attackTimer -= Time.deltaTime * AttackRateFactor;
             if (attackTimer > 0f) return;
             attackTimer = attackInterval;
 
@@ -186,6 +202,9 @@ namespace SleepDefenders
             attackTimer = attackInterval * 0.5f;
             OnStartAttack(toy);
         }
+
+        /// <summary>Gancho chamado a cada frame enquanto o monstro está vivo e a partida rola (ex.: arremessos).</summary>
+        protected virtual void OnTick(float deltaTime) { }
 
         /// <summary>Permite às subclasses ignorar certos brinquedos (ex.: Pesadelo Alado sobrevoa o primeiro).</summary>
         protected virtual bool ShouldEngage(ToyBase toy) => true;

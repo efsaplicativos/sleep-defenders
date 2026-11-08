@@ -8,10 +8,11 @@ namespace SleepDefenders
     ///   - Escuro: Robôs Laser atiram na metade da velocidade.
     ///   - Luz de cabeceira (ambiente): as primeiras "ambientColumns" colunas a partir da cama.
     ///     Normal. Cada noite define quantas colunas a luz de cabeceira alcança (Noite 1 = tapete todo).
-    ///   - Luz de abajur: as casas em volta de cada Abajur (quadrado de lado 2 * lampRadius + 1).
-    ///     Robôs atiram normalmente E as sombras andam mais devagar.
+    ///   - Luz de abajur: as casas em volta de cada Abajur (quadrado de lado 2 * lampRadius + 1)
+    ///     e o cone de cada Lanterna. Robôs atiram normalmente E as sombras andam mais devagar.
     ///
     /// Apagão: por alguns segundos os abajures param de iluminar (continuam gerando Luz).
+    /// As Lanternas continuam acesas no apagão.
     /// Ondas com "blackout" disparam um apagão quando começam.
     ///
     /// O visual é uma camada fina sobre cada casa (escura ou dourada), que aparece e some suavemente.
@@ -173,6 +174,7 @@ namespace SleepDefenders
         private void Recompute()
         {
             if (grid == null) return;
+            markCell ??= MarkCell;
             if (lampLit == null || lampLit.GetLength(0) != grid.Rows || lampLit.GetLength(1) != grid.Columns)
             {
                 lampLit = new bool[grid.Rows, grid.Columns];
@@ -181,20 +183,35 @@ namespace SleepDefenders
             if (!dirty) return;
             dirty = false;
             Array.Clear(lampLit, 0, lampLit.Length);
-            if (IsBlackout) return;
+            bool lampsOn = !IsBlackout; // no apagão só as Lanternas continuam acesas
 
             if (Application.isPlaying)
             {
                 for (int r = 0; r < grid.Rows; r++)
+                {
                     for (int c = 0; c < grid.Columns; c++)
-                        if (grid.GetOccupant(r, c) is ToyLamp lamp && lamp.IsAlive) MarkLamp(r, c);
+                    {
+                        ToyBase toy = grid.GetOccupant(r, c);
+                        if (toy == null || !toy.IsAlive) continue;
+                        if (lampsOn && toy is ToyLamp) MarkLamp(r, c);
+                        else if (toy is ToyFlashlight flashlight) flashlight.ForEachLitCell(markCell);
+                    }
+                }
             }
             else
             {
                 // Pré-visualização no Editor (cena parada): acha os abajures pela posição.
-                foreach (ToyLamp lamp in FindObjectsByType<ToyLamp>(FindObjectsSortMode.None))
-                    if (grid.WorldToCell(lamp.transform.position, out int r, out int c)) MarkLamp(r, c);
+                if (lampsOn)
+                    foreach (ToyLamp lamp in FindObjectsByType<ToyLamp>(FindObjectsSortMode.None))
+                        if (grid.WorldToCell(lamp.transform.position, out int r, out int c)) MarkLamp(r, c);
             }
+        }
+
+        private Action<int, int> markCell;
+
+        private void MarkCell(int row, int column)
+        {
+            if (grid.IsInside(row, column)) lampLit[row, column] = true;
         }
 
         private void MarkLamp(int row, int column)

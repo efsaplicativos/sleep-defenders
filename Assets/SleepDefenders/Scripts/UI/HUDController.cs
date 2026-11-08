@@ -8,10 +8,11 @@ namespace SleepDefenders
 {
     /// <summary>
     /// Telas e avisos:
-    ///   - Menu inicial com a seleção de noites (cards "Noite 1" ... "Noite 5") e a descrição da escolhida.
+    ///   - Menu inicial com a seleção de noites (cards "Noite 1" ... "Noite 5", com estrelas) e a descrição da escolhida.
+    ///   - Tela de preparo (bolsa de brinquedos + monstros da noite) quando a noite pede escolha.
     ///   - HUD de ondas ("Noite 2 • Onda 3/5" + barra de progresso da noite).
     ///   - Faixas de aviso ("Uma onda enorme se aproxima!", ratinho de corda, novidades da noite).
-    ///   - Painéis de vitória (Próxima Noite / Menu) e derrota (Tentar de Novo / Menu).
+    ///   - Painéis de vitória (estrelas + Próxima Noite / Menu) e derrota (Tentar de Novo / Menu).
     /// </summary>
     public class HUDController : MonoBehaviour
     {
@@ -26,6 +27,8 @@ namespace SleepDefenders
         [SerializeField] private TMP_Text nightDescription;
         [SerializeField] private Button startButton;
         [SerializeField] private TMP_Text startButtonLabel;
+        [Tooltip("Tela de preparo (escolha dos brinquedos). Sem ela, a noite começa com a bolsa padrão.")]
+        [SerializeField] private LoadoutPanelUI loadoutPanel;
 
         [Header("Resultado")]
         [SerializeField] private Button retryButton;
@@ -34,6 +37,10 @@ namespace SleepDefenders
         [SerializeField] private TMP_Text victorySubtitle;
         [SerializeField] private Button nextNightButton;
         [SerializeField] private Button winMenuButton;
+        [SerializeField] private List<Image> victoryStars = new List<Image>();
+        [SerializeField] private TMP_Text victoryCriteria;
+        [SerializeField] private Color starEarnedColor = new Color(1f, 0.83f, 0.3f, 1f);
+        [SerializeField] private Color starMissingColor = new Color(1f, 1f, 1f, 0.18f);
 
         [Header("Ondas")]
         [SerializeField] private TMP_Text waveLabel;
@@ -50,7 +57,7 @@ namespace SleepDefenders
 
         private void Awake()
         {
-            if (startButton != null) startButton.onClick.AddListener(() => { if (GameManager.Instance != null) GameManager.Instance.StartGame(); });
+            if (startButton != null) startButton.onClick.AddListener(OnStartPressed);
             if (retryButton != null) retryButton.onClick.AddListener(() => { if (GameManager.Instance != null) GameManager.Instance.Restart(); });
             if (nextNightButton != null) nextNightButton.onClick.AddListener(() => { if (GameManager.Instance != null) GameManager.Instance.NextNight(); });
             if (loseMenuButton != null) loseMenuButton.onClick.AddListener(() => { if (GameManager.Instance != null) GameManager.Instance.BackToMenu(); });
@@ -109,6 +116,21 @@ namespace SleepDefenders
 
         // ------------------------------------------------------------------ Menu
 
+        /// <summary>Botão "Começar": abre a tela de preparo se a noite pede escolha de brinquedos.</summary>
+        public void OnStartPressed()
+        {
+            if (game == null) game = GameManager.Instance;
+            if (game == null) return;
+            if (game.NeedsLoadoutChoice && loadoutPanel != null)
+            {
+                Sfx.Play(SfxType.Select);
+                loadoutPanel.Open();
+            }
+            else game.StartGame();
+        }
+
+        public LoadoutPanelUI LoadoutPanel => loadoutPanel;
+
         private void SelectNight(int index)
         {
             if (game == null || !LevelProgress.IsUnlocked(index)) return;
@@ -126,12 +148,13 @@ namespace SleepDefenders
             {
                 if (nightButtons[i] == null) continue;
                 NightDefinition night = campaign != null && i < campaign.Count ? campaign.nights[i] : null;
-                nightButtons[i].Show(night, LevelProgress.IsUnlocked(i), i == game.NightIndex, LevelProgress.IsCompleted(i));
+                nightButtons[i].Show(night, LevelProgress.IsUnlocked(i), i == game.NightIndex, LevelProgress.IsCompleted(i), LevelProgress.GetStars(i));
             }
 
             NightDefinition current = game.Night;
             if (startButtonLabel != null)
-                startButtonLabel.text = current != null ? "Começar " + current.title : "Começar a Noite";
+                startButtonLabel.text = current == null ? "Começar a Noite"
+                    : (current.NeedsLoadoutChoice && loadoutPanel != null ? "Preparar " : "Começar ") + current.title;
             if (nightDescription != null)
                 nightDescription.text = current != null ? DescribeNight(campaign, game.NightIndex, current) : "";
         }
@@ -142,6 +165,10 @@ namespace SleepDefenders
             List<string> news = campaign != null ? campaign.Novelties(index) : null;
             if (news != null && news.Count > 0 && index > 0)
                 text += $"\n<color=#B9A6FF>Novidades: {string.Join(", ", news)}</color>";
+            if (night.NeedsLoadoutChoice)
+                text += $"\n<color=#9EE6FF>Bolsa: leve {night.ToySlots} de {night.toys.Count} brinquedos.</color>";
+            int stars = LevelProgress.GetStars(index);
+            if (stars > 0) text += $"  <color=#FFD54A>Recorde: {stars} de {LevelProgress.MaxStars} estrelas</color>";
             return text;
         }
 
@@ -154,10 +181,18 @@ namespace SleepDefenders
             if (gameOverPanel != null) gameOverPanel.SetActive(state == GameState.Lost);
             if (victoryPanel != null) victoryPanel.SetActive(state == GameState.Won);
 
+            if (state != GameState.Menu && loadoutPanel != null) loadoutPanel.Close();
+
             switch (state)
             {
                 case GameState.Menu:
                     RefreshMenu();
+                    // "Próxima Noite" numa noite com escolha: a tela de preparo já abre sozinha.
+                    if (LevelProgress.OpenLoadout)
+                    {
+                        LevelProgress.OpenLoadout = false;
+                        if (loadoutPanel != null && game != null && game.NeedsLoadoutChoice) loadoutPanel.Open();
+                    }
                     break;
                 case GameState.Playing:
                     NightDefinition night = game != null ? game.Night : null;
@@ -186,6 +221,47 @@ namespace SleepDefenders
                     ? "Os brinquedos protegeram o sono da criança a semana inteira."
                     : $"A criança dormiu tranquila. {game.Campaign.Get(game.NightIndex + 1).title} liberada!";
             if (nextNightButton != null) nextNightButton.gameObject.SetActive(!last);
+            ShowStars();
+        }
+
+        private void ShowStars()
+        {
+            if (game == null) return;
+            int earned = game.StarsEarned;
+            for (int i = 0; i < victoryStars.Count; i++)
+                if (victoryStars[i] != null) victoryStars[i].color = i < earned ? starEarnedColor : starMissingColor;
+            if (victoryStars.Count > 0) StartCoroutine(PopStars(earned));
+
+            if (victoryCriteria != null)
+            {
+                string Line(bool ok, string text) =>
+                    ok ? $"<color=#FFD54A>{text}</color>" : $"<color=#8F87AA>{text}  (faltou)</color>";
+                string record = game.NewStarRecord && game.StarsEarned > 0 ? "\n<color=#9EE6FF>Novo recorde!</color>" : "";
+                victoryCriteria.text =
+                    Line(true, "1. Venceu a noite") + "\n" +
+                    Line(!game.LampLost, "2. Nenhum Abajur quebrado") + "\n" +
+                    Line(!game.BedZoneBreached, "3. Nenhum monstro chegou perto da cama") + record;
+            }
+        }
+
+        private IEnumerator PopStars(int earned)
+        {
+            foreach (Image star in victoryStars)
+                if (star != null) star.transform.localScale = Vector3.zero;
+            for (int i = 0; i < victoryStars.Count; i++)
+            {
+                Image star = victoryStars[i];
+                if (star == null) continue;
+                yield return new WaitForSecondsRealtime(0.25f);
+                if (i < earned) Sfx.Play(SfxType.Collect, 0.8f);
+                for (float t = 0f; t < 0.3f; t += Time.unscaledDeltaTime)
+                {
+                    float k = t / 0.3f;
+                    star.transform.localScale = Vector3.one * (1f + Mathf.Sin(k * Mathf.PI) * 0.35f) * k;
+                    yield return null;
+                }
+                star.transform.localScale = Vector3.one;
+            }
         }
 
         private void OnWaveStarted(int index, Wave wave)

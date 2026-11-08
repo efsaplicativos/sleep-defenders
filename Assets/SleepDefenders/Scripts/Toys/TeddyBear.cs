@@ -5,6 +5,7 @@ namespace SleepDefenders
     /// <summary>
     /// Urso de Pelúcia — tanque/barreira. Custo 50, muita vida (padrão 400 HP).
     /// Não ataca: apenas segura os monstros. Fica "amassado" conforme perde vida para o jogador perceber.
+    /// Perto de uma Caixinha de Música recupera vida (combo).
     /// </summary>
     public class TeddyBear : ToyBase
     {
@@ -21,7 +22,12 @@ namespace SleepDefenders
             if (visualToSquash != null) baseScale = visualToSquash.localScale;
         }
 
-        protected override void OnDamaged(float amount)
+        protected override void OnDamaged(float amount) => UpdateSquash();
+
+        /// <summary>Curado pela Caixinha de Música: "desamassa" de volta.</summary>
+        protected override void OnHealed(float amount) => UpdateSquash();
+
+        private void UpdateSquash()
         {
             if (visualToSquash == null) return;
             float hurt = 1f - Mathf.Clamp01(CurrentHP / MaxHP);

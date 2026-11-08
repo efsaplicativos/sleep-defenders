@@ -42,6 +42,15 @@ namespace SleepDefenders
         /// <summary>Disparado uma única vez quando o brinquedo é destruído ou removido.</summary>
         public event Action<ToyBase> Destroyed;
 
+        /// <summary>
+        /// Disparado quando QUALQUER brinquedo é quebrado pelos monstros (vida zerada).
+        /// Guardar o brinquedo ou o Carrinho RC partir não contam. Usado nas estrelas da noite.
+        /// </summary>
+        public static event Action<ToyBase> Broken;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => Broken = null;
+
         protected virtual void Awake()
         {
             CurrentHP = maxHP;
@@ -75,6 +84,16 @@ namespace SleepDefenders
 
         protected virtual void OnDamaged(float amount) { }
 
+        /// <summary>Recupera vida (sem passar do máximo). Ex.: Urso perto da Caixinha de Música.</summary>
+        public void Heal(float amount)
+        {
+            if (!IsAlive || amount <= 0f || CurrentHP >= MaxHP) return;
+            CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
+            OnHealed(amount);
+        }
+
+        protected virtual void OnHealed(float amount) { }
+
         /// <summary>Destrói o brinquedo (vida zerada).</summary>
         public void Die()
         {
@@ -82,6 +101,7 @@ namespace SleepDefenders
             CurrentHP = 0f;
             Sfx.Play(SfxType.ToyBreak);
             Vfx.Spawn(VfxType.Puff, transform.position + Vector3.up * 0.4f, deathPuffColor);
+            Broken?.Invoke(this);
             Despawn();
         }
 
